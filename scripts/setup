@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+set -e
+
+cd "$(dirname "$0")/.."
+
+scripts/install/pip_packages "pip>=21.0,<23.1"
+scripts/install/pip_packages --requirement requirements.txt
+scripts/install/core

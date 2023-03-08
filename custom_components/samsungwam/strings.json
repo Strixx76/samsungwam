@@ -1,0 +1,25 @@
+{
+	"config": {
+		"flow_title": "Samsung Wireless Audio",
+		"step": {
+			"user": {
+				"title": "Add Speaker",
+				"description": "Enter your speaker data.",
+				"data": {
+					"host": "host",
+					"port": "port"
+				}
+			},
+			"confirm": {
+				"description": "Do you want to add speaker {name} of model {model}?"
+			}
+		},
+		"abort": {
+			"already_configured": "Speaker is already added",
+			"already_in_progress": "Configuration flow is already in progress",
+			"cannot_connect": "Failed to connect",
+			"no_serial": "Serial number missing.",
+			"not_supported": "Model not supported."
+			}
+	}
+}
