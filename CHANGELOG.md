@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
-## [0.0.1] - 2023-03-07
+## [0.0.2] - 2023-03-09
 
 - Change to async_forward_entry_setups for compatibility with Home Assistant version > 2023.3
 
