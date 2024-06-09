@@ -1,3 +1,14 @@
+
+TODO_*.md
+
+# Home Assistant configuration
+.devcontainer/config/
+.devcontainer/preconfig/
+
+# Script check output
+WARNING*
+
+
 # **************************************************************
 # https://github.com/github/gitignore/blob/main/Python.gitignore
 # **************************************************************
@@ -170,6 +181,10 @@ cython_debug/
 
 # VS Code
 .vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/autodocstring.mustache
 
 # Local History for Visual Studio Code
 .history/

@@ -1,45 +1,63 @@
 {
   "name": "Samsung Wireless Audio",
-  "image": "mcr.microsoft.com/vscode/devcontainers/python:0-3.9",
-  "postCreateCommand": "scripts/setup",
+  "remoteEnv": {
+      "INTEGRATION_PATH": "samsungwam",
+      // Add name of local pip package here
+      "PIP_PACKAGE": "pywam"
+  },
+  // If you are developing a pip package together with the integration you can uncomment the below lines
+  // and mount it in this container to be able to do local pip installs.
+  // Only change path to source!!!
+  "mounts": [
+    "source=C:/Users/strix/OneDrive/Programmering/github/pywam,target=/home/vscode/package,type=bind,consistency=ro"
+],
+  "build": {
+      "dockerfile": "Dockerfile",
+      "context": ".."
+  },
+  "postCreateCommand": ".devcontainer/post_create.sh",
+  "postStartCommand": ".devcontainer/post_start.sh",
   "forwardPorts": [
-    8123
+      8123
   ],
-  "customizations": {
-    "vscode": {
-      "extensions": [
-        "ms-python.python",
-        "ms-python.vscode-pylance",
-        "github.vscode-pull-request-github",
-        "donjayamanne.githistory"
-      ],
-      "settings": {
-        "python.defaultInterpreterPath": "/usr/local/bin/python",
-        "python.linting.enabled": true,
-        "python.linting.pylintEnabled": true,
-        "python.formatting.autopep8Path": "/usr/local/py-utils/bin/autopep8",
-        "python.formatting.blackPath": "/usr/local/py-utils/bin/black",
-        "python.formatting.yapfPath": "/usr/local/py-utils/bin/yapf",
-        "python.linting.banditPath": "/usr/local/py-utils/bin/bandit",
-        "python.linting.flake8Path": "/usr/local/py-utils/bin/flake8",
-        "python.linting.mypyPath": "/usr/local/py-utils/bin/mypy",
-        "python.linting.pycodestylePath": "/usr/local/py-utils/bin/pycodestyle",
-        "python.linting.pydocstylePath": "/usr/local/py-utils/bin/pydocstyle",
-        "python.linting.pylintPath": "/usr/local/py-utils/bin/pylint",
-        "files.eol": "\n",
-        "editor.tabSize": 4,
-        "python.pythonPath": "/usr/local/python/bin/python",
-        "python.analysis.autoSearchPaths": false,
-        "python.linting.pylintArgs": [
-          "--disable",
-          "import-error"
-        ],
-        "python.formatting.provider": "black",
-        "editor.formatOnPaste": false,
-        "editor.formatOnSave": true,
-        "editor.formatOnType": true,
-        "files.trimTrailingWhitespace": true
+  "portsAttributes": {
+      "8123": {
+          "label": "Home Assistant",
+          "onAutoForward": "silent"
       }
-    }
+  },
+  "customizations": {
+      "vscode": {
+          "extensions": [
+              "ms-python.python",
+              "ms-python.vscode-pylance",
+              "ms-python.mypy-type-checker",
+              "charliermarsh.ruff",
+              "ryanluker.vscode-coverage-gutters",
+              "njpwerner.autodocstring",
+              "streetsidesoftware.code-spell-checker",
+              "ms-vscode-remote.remote-containers",
+              "ms-azuretools.vscode-docker",
+              "eamodio.gitlens",
+              "github.vscode-pull-request-github"
+          ],
+          "settings": {
+              "[python]": {
+                  "editor.defaultFormatter": "charliermarsh.ruff"
+              },
+              "python.pythonPath": "/usr/bin/python3",
+              "python.testing.unittestEnabled": false,
+              "python.testing.pytestEnabled": true,
+              "python.testing.pytestArgs": [
+                  "--no-cov",
+                  "tests/"
+              ],
+              "editor.formatOnPaste": false,
+              "editor.formatOnSave": true,
+              "editor.formatOnType": true,
+              "files.trimTrailingWhitespace": true,
+              "autoDocstring.customTemplatePath": ".vscode/autodocstring.mustache"
+          }
+      }
   }
 }

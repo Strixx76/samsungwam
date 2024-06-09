@@ -1,0 +1,23 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Configure Home Assistant",
+            "type": "shell",
+            "command": ".devcontainer/config_hass.sh",
+            "problemMatcher": []
+        },
+        {
+            "label": "Start Home Assistant with preconf",
+            "type": "shell",
+            "command": ".devcontainer/start_hass_preconf.sh",
+            "problemMatcher": []
+        },
+        {
+            "label": "Start Home Assistant",
+            "type": "shell",
+            "command": ".devcontainer/start_hass.sh",
+            "problemMatcher": []
+        }
+    ]
+}

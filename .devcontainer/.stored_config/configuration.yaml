@@ -1,0 +1,27 @@
+default_config:
+
+homeassistant:
+  name: Home
+  latitude: 59.327
+  longitude: 18.072
+  elevation: 20
+  unit_system: metric
+  currency: SEK
+  country: SE
+  time_zone: "Europe/Stockholm"
+  auth_providers:
+    - type: trusted_networks
+      trusted_networks:
+        - 0.0.0.0/0
+      trusted_users:
+        0.0.0.0/0: 1141ee80e0a647c1a4687d0b7631a019
+      allow_bypass_login: true
+    - type: homeassistant
+
+# debugpy:
+
+logger:
+  default: error
+  # logs:
+  # homeassistant.components.debugpy: warning
+  # custom_components.integration_blueprint: debug

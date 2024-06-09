@@ -1,0 +1,20 @@
+name: Release
+
+on:
+  release:
+    types:
+      - published
+
+jobs:
+  # Needed for download count
+  - add_zip_file:
+    - name: '📦 Add zip file'
+        permissions:
+          contents: write
+        run: |
+            cd ${{github.workspace}}/custom_components/
+            zip ${{github.event.repository.name}}.zip -r ./
+            gh release upload ${{github.event.release.tag_name}} ${{github.event.repository.name}}.zip
+        env:
+          GITHUB_TOKEN: ${{github.TOKEN}}
+        shell: bash
