@@ -8,7 +8,10 @@ LOGGER = logging.getLogger(__package__)
 
 DOMAIN = "samsungwam"
 
-CONF_WAM_DATA = "data"
-CONF_WAM_OPT = "options"
 ID_MAPPINGS = "media_player_entity_ids"
-HASS_WAM_SPEAKER = "speaker"
+COORDINATOR = "wam_coordinator"
+
+# Interval to check speaker connection in minutes
+PING_INTERVAL = 10
+# Min time in minutes between reconnection attempts
+MIN_RECONNECTION_INTERVAL = 5

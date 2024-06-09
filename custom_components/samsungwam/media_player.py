@@ -5,8 +5,7 @@ from __future__ import annotations
 import datetime as dt
 from typing import Any
 
-from pywam.speaker import Speaker
-from pywam.lib.const import Feature, SOURCES_BY_NAME
+from pywam.lib.const import Feature
 
 from homeassistant.const import STATE_IDLE, STATE_PLAYING, STATE_PAUSED
 from homeassistant.components import media_source
@@ -31,8 +30,6 @@ from homeassistant.components.media_player.const import (
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.exceptions import HomeAssistantError
-from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
@@ -41,7 +38,11 @@ from .const import (
     DOMAIN,
     ID_MAPPINGS,
     LOGGER,
-    HASS_WAM_SPEAKER,
+    COORDINATOR,
+)
+from .coordinator import (
+    async_check_response,
+    SamsungWamCoordinator,
 )
 
 
@@ -83,67 +84,38 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up WAM media player from a config entry."""
-    speaker = hass.data[DOMAIN][entry.entry_id][HASS_WAM_SPEAKER]
-    media_player = SamsungWamPlayer(speaker, entry)
+    coordinator: SamsungWamCoordinator = hass.data[DOMAIN][entry.entry_id][COORDINATOR]
+    media_player = SamsungWamPlayer(coordinator)
 
     async_add_entities([media_player])
 
-    LOGGER.debug(
-        "Media player '%s' at '%s' added to Home Assistant",
-        speaker.attribute.name,
-        speaker.ip,
-    )
-
 
 class SamsungWamPlayer(MediaPlayerEntity):
-    """Representation of a Samsung Wireless Audio Speaker."""
+    """Representation of a Samsung Wireless Audio media player."""
 
     _attr_device_class = MediaPlayerDeviceClass.SPEAKER
     _attr_should_poll = False
 
-    def __init__(self, speaker: Speaker, entry: ConfigEntry) -> None:
+    def __init__(self, coordinator: SamsungWamCoordinator) -> None:
         """Initialize the media player."""
-        self.speaker = speaker
-        self._entry = entry
-        self._unique_id = entry.unique_id
+        self.coordinator = coordinator
+        self.speaker = coordinator.speaker
+        self._entry = coordinator.entry
+        self._unique_id = self._entry.unique_id
 
-    def _pywam_receiver(self) -> None:
+    def _state_receiver(self) -> None:
         """Receives state changes from pywam."""
-        # Tell Home Assistant that there is a state change
         self.schedule_update_ha_state()
-
-        # If speaker name has change update config entry and device registry.
-        # TODO: Move to separate method and add handling for changed sw_version.
-        if self.speaker.attribute.name != self._entry.title:
-            # Don't change title if name doesn't exist.
-            if not self.speaker.attribute.name:
-                return
-            self.hass.config_entries.async_update_entry(
-                entry=self._entry, title=self.speaker.attribute.name
-            )
-            # Update device registry
-            device_registry = dr.async_get(self.hass)
-            device_entry = device_registry.async_get_device({(DOMAIN, self._unique_id)})  # type: ignore
-            assert device_entry
-            device_registry.async_update_device(
-                device_entry.id, name=self.speaker.attribute.name
-            )
 
     @property
     def available(self) -> bool:
         """Return True if entity is available."""
-        return self.speaker.client.is_connected
+        return self.coordinator.is_connected
 
     @property
     def device_info(self) -> DeviceInfo | None:
         """Return device specific attributes."""
-        return DeviceInfo(
-            identifiers={(DOMAIN, self._unique_id)},  # type: ignore
-            manufacturer="Samsung",
-            model=self.speaker.attribute.model,
-            name=self.speaker.attribute.name,
-            sw_version=self.speaker.attribute.software_version,
-        )
+        return self.coordinator.device_info
 
     @property
     def name(self) -> str | None:
@@ -159,10 +131,10 @@ class SamsungWamPlayer(MediaPlayerEntity):
         """Return the state of the device."""
         if self.speaker.attribute.state == "play":
             return STATE_PLAYING
-        elif self.speaker.attribute.state == "pause":
+        if self.speaker.attribute.state == "pause":
             return STATE_PAUSED
-        else:
-            return STATE_IDLE
+
+        return STATE_IDLE
 
     @property
     def supported_features(self) -> int:
@@ -187,7 +159,7 @@ class SamsungWamPlayer(MediaPlayerEntity):
         first time. Example uses: restore the state, subscribe to
         updates or set callback/dispatch function/listener.
         """
-        self.speaker.events.register_subscriber(self._pywam_receiver)
+        self.speaker.events.register_subscriber(self._state_receiver)
         self.hass.data[DOMAIN][ID_MAPPINGS][self.entity_id] = self.speaker
 
     async def async_will_remove_from_hass(self) -> None:
@@ -198,7 +170,7 @@ class SamsungWamPlayer(MediaPlayerEntity):
         Example use: disconnect from the server or unsubscribe from
         updates.
         """
-        self.speaker.events.unregister_subscriber(self._pywam_receiver)
+        self.speaker.events.unregister_subscriber(self._state_receiver)
         self.hass.data[DOMAIN][ID_MAPPINGS].pop(self.entity_id, None)
 
     @callback
@@ -384,6 +356,8 @@ class SamsungWamPlayer(MediaPlayerEntity):
                     group_members.append(entity_id)
             return group_members
 
+        return None
+
     async def async_turn_on(self):
         """Turn the media player on."""
         raise NotImplementedError()
@@ -392,31 +366,38 @@ class SamsungWamPlayer(MediaPlayerEntity):
         """Turn the media player off."""
         raise NotImplementedError()
 
+    @async_check_response
     async def async_mute_volume(self, mute: bool) -> None:
         """Mute the volume."""
         await self.speaker.set_mute(mute)
 
+    @async_check_response
     async def async_set_volume_level(self, volume: float) -> None:
         """Set volume level, range 0..1."""
         vol = int(volume * 100)
         await self.speaker.set_volume(vol)
 
+    @async_check_response
     async def async_media_play(self) -> None:
         """Send play command."""
         await self.speaker.cmd_play()
 
+    @async_check_response
     async def async_media_pause(self) -> None:
         """Send pause command."""
         await self.speaker.cmd_pause()
 
+    @async_check_response
     async def async_media_stop(self) -> None:
         """Send stop command."""
         await self.speaker.cmd_stop()
 
+    @async_check_response
     async def async_media_previous_track(self) -> None:
         """Send previous track command."""
         await self.speaker.cmd_previous()
 
+    @async_check_response
     async def async_media_next_track(self) -> None:
         """Send next track command."""
         await self.speaker.cmd_next()
@@ -438,8 +419,8 @@ class SamsungWamPlayer(MediaPlayerEntity):
         if media_source.is_media_source_id(media_id):
             play_item = await media_source.async_resolve_media(self.hass, media_id)
             url = async_process_play_media_url(self.hass, play_item.url)
-            LOGGER.info("Sending url: %s", url)
-            LOGGER.info("With media type: %s", media_type)
+            LOGGER.debug("Sending url: %s", url)
+            LOGGER.debug("With media type: %s", media_type)
             # Examples of url sent from Media Source:
             # http://webradio.dbmedia.se/streams/crr96.pls
             # http://fm02-ice.stream.khz.se/fm02_mp3
@@ -453,20 +434,25 @@ class SamsungWamPlayer(MediaPlayerEntity):
                 if favorite.contentid == play_item:
                     await self.speaker.play_preset(favorite)
                     return
-            LOGGER.error("TuneIn favorite not found on the speaker")
+            LOGGER.error(
+                "%s TuneIn favorite not found on the speaker", self.coordinator.id
+            )
 
         # Error - media could not be played
         else:
             LOGGER.error(
-                "Media (%s with type %s) is not supported",
+                "%s Media (%s with type %s) is not supported",
+                self.coordinator.id,
                 media_id,
                 media_type,
             )
 
+    @async_check_response
     async def async_select_source(self, source: str) -> None:
         """Select input source."""
         await self.speaker.select_source(source)
 
+    @async_check_response
     async def async_select_sound_mode(self, sound_mode) -> None:
         """Select sound mode."""
         for mode in self.speaker.attribute.sound_mode_list:
@@ -477,10 +463,12 @@ class SamsungWamPlayer(MediaPlayerEntity):
         """Clear players playlist."""
         raise NotImplementedError()
 
+    @async_check_response
     async def async_set_shuffle(self, shuffle) -> None:
         """Enable/disable shuffle mode."""
         await self.speaker.set_shuffle(shuffle)
 
+    @async_check_response
     async def async_set_repeat(self, repeat) -> None:
         """Set repeat mode."""
         await self.speaker.set_repeat_mode(REPEAT_TO_WAM[repeat])
