@@ -76,46 +76,53 @@ FEATURES_MAPPING = {
     Feature.PLAY_URL: MediaPlayerEntityFeature.PLAY_MEDIA,
     Feature.SELECT_SOURCE: MediaPlayerEntityFeature.SELECT_SOURCE,
 }
+# TODO: List all events to listen for
+MONITORED_ATTRIBUTES: set[str] = set()
 
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: ConfigEntry,
+    entry: WamConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up WAM media player from a config entry."""
-    coordinator: SamsungWamCoordinator = hass.data[DOMAIN][entry.entry_id][COORDINATOR]
-    media_player = SamsungWamPlayer(coordinator)
+    device = entry.runtime_data.device
+    media_player = SamsungWamPlayer(device)
 
     async_add_entities([media_player])
 
 
-class SamsungWamPlayer(MediaPlayerEntity):
+class SamsungWamPlayer(WamEntity, MediaPlayerEntity):
     """Representation of a Samsung Wireless Audio media player."""
 
     _attr_device_class = MediaPlayerDeviceClass.SPEAKER
-    _attr_should_poll = False
 
-    def __init__(self, coordinator: SamsungWamCoordinator) -> None:
+    def __init__(
+        self,
+        device: SamsungWamDevice,
+    ) -> None:
         """Initialize the media player."""
-        self.coordinator = coordinator
-        self.speaker = coordinator.speaker
-        self._entry = coordinator.entry
-        self._unique_id = self._entry.unique_id
-
-    def _state_receiver(self) -> None:
-        """Receives state changes from pywam."""
-        self.schedule_update_ha_state()
+        super().__init__(device)
 
     @property
-    def available(self) -> bool:
-        """Return True if entity is available."""
-        return self.coordinator.is_connected
+    def wam_monitored_attributes(self) -> set[str] | None:
+        """Returns all attributes to monitor."""
+        return MONITORED_ATTRIBUTES
 
-    @property
-    def device_info(self) -> DeviceInfo | None:
-        """Return device specific attributes."""
-        return self.coordinator.device_info
+    async def wam_async_added_to_hass_extra(self) -> None:
+        """Run when entity about to be added to hass."""
+        # We need to add the media player to the coordinator to be able
+        # to handle grouping of speakers in a correct way.
+        self.device.coordinator.add_media_player(self.entity_id, self)
+        # We need to tell Home Assistant to update all media players after
+        # we added a new one, otherwise initial grouping information will
+        # not work since only loaded entities are returned.
+        self.device.coordinator.update_hass_states()
+
+    async def wam_async_will_remove_from_hass_extra(self) -> None:
+        """Run when entity will be removed from hass."""
+        self.device.coordinator.delete_media_player(self.entity_id)
+        self.device.coordinator.update_hass_states()
 
     @property
     def name(self) -> str | None:
@@ -366,38 +373,38 @@ class SamsungWamPlayer(MediaPlayerEntity):
         """Turn the media player off."""
         raise NotImplementedError()
 
-    @async_check_response
+    @async_check_connection(True)
     async def async_mute_volume(self, mute: bool) -> None:
         """Mute the volume."""
         await self.speaker.set_mute(mute)
 
-    @async_check_response
+    @async_check_connection(True)
     async def async_set_volume_level(self, volume: float) -> None:
         """Set volume level, range 0..1."""
         vol = int(volume * 100)
         await self.speaker.set_volume(vol)
 
-    @async_check_response
+    @async_check_connection
     async def async_media_play(self) -> None:
         """Send play command."""
         await self.speaker.cmd_play()
 
-    @async_check_response
+    @async_check_connection
     async def async_media_pause(self) -> None:
         """Send pause command."""
         await self.speaker.cmd_pause()
 
-    @async_check_response
+    @async_check_connection
     async def async_media_stop(self) -> None:
         """Send stop command."""
         await self.speaker.cmd_stop()
 
-    @async_check_response
+    @async_check_connection
     async def async_media_previous_track(self) -> None:
         """Send previous track command."""
         await self.speaker.cmd_previous()
 
-    @async_check_response
+    @async_check_connection
     async def async_media_next_track(self) -> None:
         """Send next track command."""
         await self.speaker.cmd_next()
@@ -447,12 +454,12 @@ class SamsungWamPlayer(MediaPlayerEntity):
                 media_type,
             )
 
-    @async_check_response
+    @async_check_connection(True)
     async def async_select_source(self, source: str) -> None:
         """Select input source."""
         await self.speaker.select_source(source)
 
-    @async_check_response
+    @async_check_connection(True)
     async def async_select_sound_mode(self, sound_mode) -> None:
         """Select sound mode."""
         for mode in self.speaker.attribute.sound_mode_list:
@@ -463,12 +470,12 @@ class SamsungWamPlayer(MediaPlayerEntity):
         """Clear players playlist."""
         raise NotImplementedError()
 
-    @async_check_response
+    @async_check_connection
     async def async_set_shuffle(self, shuffle) -> None:
         """Enable/disable shuffle mode."""
         await self.speaker.set_shuffle(shuffle)
 
-    @async_check_response
+    @async_check_connection
     async def async_set_repeat(self, repeat) -> None:
         """Set repeat mode."""
         await self.speaker.set_repeat_mode(REPEAT_TO_WAM[repeat])
