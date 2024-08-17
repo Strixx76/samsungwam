@@ -16,7 +16,7 @@ WAM_TUNEIN_APP_URI_SCHEME = "wam_tunein_app://"
 
 
 def is_tunein_favorite_media_id(media_id: str) -> bool:
-    """True if media id is a TuneIn favorite."""
+    """Return True if media id is a TuneIn favorite."""
     if media_id.split("://")[0] + "://" == WAM_TUNEIN_FAV_URI_SCHEME:
         return True
     else:
@@ -24,7 +24,7 @@ def is_tunein_favorite_media_id(media_id: str) -> bool:
 
 
 def is_tunein_app_media_id(media_id: str) -> bool:
-    """True if media id is from TuneIn app."""
+    """Return True if media id is from TuneIn app."""
     if media_id.split("://")[0] + "://" == WAM_TUNEIN_APP_URI_SCHEME:
         return True
     else:
@@ -32,7 +32,7 @@ def is_tunein_app_media_id(media_id: str) -> bool:
 
 
 def resolve_media(media_id: str) -> str:
-    """Return media id without the uri part."""
+    """Return media id without the scheme part."""
     return media_id.split("://", 1)[1]
 
 

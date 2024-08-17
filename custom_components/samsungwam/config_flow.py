@@ -65,6 +65,7 @@ class SamsungWamConfigFlow(ConfigFlow, domain=DOMAIN):
             self.config_title = name
             self.config_id = speaker_id
         except Exception:  # pylint: disable=broad-except
+            LOGGER.exception("Error while getting speaker data")
             # TODO: Better error handling
             return self.async_abort(reason=ERROR_CANNOT_CONNECT)
 
@@ -75,6 +76,8 @@ class SamsungWamConfigFlow(ConfigFlow, domain=DOMAIN):
         self._abort_if_unique_id_configured(
             updates={CONF_HOST: self.config_data[CONF_HOST]}
         )
+
+        return None
 
     async def async_step_ssdp(
         self, discovery_info: ssdp.SsdpServiceInfo

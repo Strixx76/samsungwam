@@ -152,40 +152,6 @@ class SamsungWamPlayer(WamEntity, MediaPlayerEntity):
         """Return a unique ID."""
         return f"{self._unique_id}-media_player"
 
-    async def async_added_to_hass(self) -> None:
-        """Run when entity about to be added to hass.
-        To be extended by integrations.
-
-        Called when an entity has their entity_id and hass object
-        assigned, before it is written to the state machine for the
-        first time. Example uses: restore the state, subscribe to
-        updates or set callback/dispatch function/listener.
-        """
-        self.speaker.events.register_subscriber(self._state_receiver)
-        self.hass.data[DOMAIN][ID_MAPPINGS][self.entity_id] = self.speaker
-
-    async def async_will_remove_from_hass(self) -> None:
-        """Run when entity will be removed from hass.
-        To be extended by integrations.
-
-        Called when an entity is about to be removed from Home Assistant.
-        Example use: disconnect from the server or unsubscribe from
-        updates.
-        """
-        self.speaker.events.unregister_subscriber(self._state_receiver)
-        self.hass.data[DOMAIN][ID_MAPPINGS].pop(self.entity_id, None)
-
-    @callback
-    def async_registry_entry_updated(self) -> None:
-        """Run when the entity registry entry has been updated.
-        To be extended by integrations.
-        """
-
-    async def async_removed_from_registry(self) -> None:
-        """Run when entity has been removed from entity registry.
-        To be extended by integrations.
-        """
-
     # ***************************************************************************
     # homeassistant.components.media_player.MediaPlayerEntity
     # ***************************************************************************
@@ -195,6 +161,7 @@ class SamsungWamPlayer(WamEntity, MediaPlayerEntity):
         """Volume level of the media player (0..1)."""
         if self.speaker.attribute.volume:
             return self.speaker.attribute.volume / 100
+        return None
 
     @property
     def is_volume_muted(self) -> bool | None:
@@ -249,7 +216,7 @@ class SamsungWamPlayer(WamEntity, MediaPlayerEntity):
     @property
     def media_image_remotely_accessible(self) -> bool:
         """If the image url is remotely accessible."""
-        if not self.app_name == "dlna":
+        if self.app_name != "dlna":
             return True
         else:
             return False
@@ -383,8 +350,7 @@ class SamsungWamPlayer(WamEntity, MediaPlayerEntity):
     @async_check_connection(True)
     async def async_set_volume_level(self, volume: float) -> None:
         """Set volume level, range 0..1."""
-        vol = int(volume * 100)
-        await self.speaker.set_volume(vol)
+        await self.speaker.set_volume(int(volume * 100))
 
     @async_check_connection
     async def async_media_play(self) -> None:
