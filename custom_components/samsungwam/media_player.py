@@ -20,13 +20,9 @@ from homeassistant.components.media_player.browse_media import (
     async_process_play_media_url,
 )
 from homeassistant.components.media_player.const import (
-    MEDIA_TYPE_APP,
-    MEDIA_TYPE_CHANNEL,
-    MEDIA_TYPE_MUSIC,
-    MEDIA_TYPE_URL,
-    REPEAT_MODE_ALL,
-    REPEAT_MODE_OFF,
-    REPEAT_MODE_ONE,
+    MediaPlayerState,
+    MediaType,
+    RepeatMode,
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
@@ -47,17 +43,11 @@ from .coordinator import (
 
 
 WAM_TO_REPEAT = {
-    "off": REPEAT_MODE_OFF,
-    "all": REPEAT_MODE_ALL,
-    "one": REPEAT_MODE_ONE,
+    "off": RepeatMode.OFF,
+    "all": RepeatMode.ALL,
+    "one": RepeatMode.ONE,
 }
 REPEAT_TO_WAM = {ha: wam for wam, ha in WAM_TO_REPEAT.items()}
-WAM_TO_MEDIA_TYPE = {
-    "app": MEDIA_TYPE_APP,
-    "channel": MEDIA_TYPE_CHANNEL,
-    "music": MEDIA_TYPE_MUSIC,
-    "url": MEDIA_TYPE_URL,
-}
 SUPPORTED_FEATURES = (
     MediaPlayerEntityFeature.VOLUME_SET
     | MediaPlayerEntityFeature.VOLUME_MUTE
@@ -137,11 +127,11 @@ class SamsungWamPlayer(WamEntity, MediaPlayerEntity):
     def state(self):
         """Return the state of the device."""
         if self.speaker.attribute.state == "play":
-            return STATE_PLAYING
+            return MediaPlayerState.PLAYING
         if self.speaker.attribute.state == "pause":
-            return STATE_PAUSED
+            return MediaPlayerState.PAUSED
 
-        return STATE_IDLE
+        return MediaPlayerState.IDLE  # "stop" is IDLE
 
     @property
     def supported_features(self) -> int:
@@ -218,13 +208,13 @@ class SamsungWamPlayer(WamEntity, MediaPlayerEntity):
             return None
 
         if self.app_name == "url":
-            return MEDIA_TYPE_URL
+            return MediaType.URL
         if self.app_name == "dlna":
-            return MEDIA_TYPE_MUSIC
+            return MediaType.MUSIC
         if self.app_name == "TuneIn":
-            return MEDIA_TYPE_CHANNEL
+            return MediaType.CHANNEL
 
-        return MEDIA_TYPE_APP
+        return MediaType.APP
 
     @property
     def media_duration(self) -> int | None:
@@ -240,6 +230,7 @@ class SamsungWamPlayer(WamEntity, MediaPlayerEntity):
     @property
     def media_position_updated_at(self) -> dt.datetime | None:
         """When was the position of the current playing media valid.
+
         Returns value from homeassistant.util.dt.utcnow().
         """
         # Not implemented
@@ -286,8 +277,9 @@ class SamsungWamPlayer(WamEntity, MediaPlayerEntity):
     @property
     def media_channel(self) -> str | None:
         """Channel currently playing."""
-        if self.media_content_type == MEDIA_TYPE_CHANNEL:
+        if self.media_content_type == MediaType.CHANNEL:
             return self.media_title
+        return None
 
     @property
     def media_playlist(self) -> str | None:
@@ -334,8 +326,7 @@ class SamsungWamPlayer(WamEntity, MediaPlayerEntity):
     @property
     def repeat(self) -> str | None:
         """Return current repeat mode."""
-        if mode := self.speaker.attribute.repeat_mode:
-            return WAM_TO_REPEAT.get(mode)
+        return WAM_TO_REPEAT.get(self.speaker.attribute.repeat_mode)
 
     @property
     def group_members(self) -> list[str] | None:
@@ -481,8 +472,10 @@ class SamsungWamPlayer(WamEntity, MediaPlayerEntity):
         await self.speaker.set_repeat_mode(REPEAT_TO_WAM[repeat])
 
     async def async_browse_media(
-        self, media_content_type: str | None = None, media_content_id: str | None = None
-    ) -> BrowseMedia | None:
+        self,
+        media_content_type: MediaType | str | None = None,
+        media_content_id: str | None = None,
+    ) -> BrowseMedia:
         """Implement the websocket media browsing helper."""
         return await media_browser.async_browse_media(
             self.hass,

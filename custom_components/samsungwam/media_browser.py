@@ -2,18 +2,14 @@
 
 from __future__ import annotations
 
-from pywam.speaker import Speaker
-
-from homeassistant.components.media_player import BrowseMedia
 from homeassistant.components import media_source
-from homeassistant.components.media_player.const import (
-    MEDIA_CLASS_APP,
-    MEDIA_CLASS_CHANNEL,
-    MEDIA_CLASS_DIRECTORY,
-    MEDIA_TYPE_APP,
-    MEDIA_TYPE_CHANNEL,
-    MEDIA_TYPE_CHANNELS,
+from homeassistant.components.media_player import (
+    BrowseError,
+    BrowseMedia,
+    MediaClass,
+    MediaType,
 )
+from pywam.speaker import Speaker
 
 WAM_TUNEIN_FAV_URI_SCHEME = "wam_tunein_fav://"
 WAM_TUNEIN_APP_URI_SCHEME = "wam_tunein_app://"
@@ -40,7 +36,7 @@ def resolve_media(media_id: str) -> str:
     return media_id.split("://", 1)[1]
 
 
-def media_source_filter(item: BrowseMedia):
+def media_source_filter(item: BrowseMedia) -> bool:
     """Filter media from media source integration."""
     return item.media_content_type.startswith("audio/")
 
@@ -53,13 +49,13 @@ async def async_browse_root(hass, speaker: Speaker) -> BrowseMedia:
     if speaker.attribute.tunein_presets:
         children.append(
             BrowseMedia(
-                media_class=MEDIA_CLASS_DIRECTORY,
+                media_class=MediaClass.DIRECTORY,
                 media_content_id=WAM_TUNEIN_FAV_URI_SCHEME,
-                media_content_type=MEDIA_TYPE_CHANNELS,
+                media_content_type=MediaType.CHANNELS,
                 title="TuneIn Favorites",
                 can_play=False,
                 can_expand=True,
-                children_media_class=MEDIA_CLASS_CHANNEL,
+                children_media_class=MediaClass.CHANNEL,
             )
         )
 
@@ -77,7 +73,7 @@ async def async_browse_root(hass, speaker: Speaker) -> BrowseMedia:
     # )
     # )
 
-    # DNLA on speaker
+    # DLNA on speaker
     # TODO: To be implemented
 
     # Media Sources
@@ -90,11 +86,11 @@ async def async_browse_root(hass, speaker: Speaker) -> BrowseMedia:
             children.extend(item.children)  # type: ignore
         else:
             children.append(item)
-    except media_source.BrowseError:
+    except BrowseError:
         pass
 
     return BrowseMedia(
-        media_class=MEDIA_CLASS_DIRECTORY,
+        media_class=MediaClass.DIRECTORY,
         media_content_id="",
         media_content_type="",
         title="Samsung WAM",
@@ -112,9 +108,9 @@ async def async_browse_tunein_favorites(speaker: Speaker) -> BrowseMedia:
     for favorite in speaker.attribute.tunein_presets:
         favorites.append(
             BrowseMedia(
-                media_class=MEDIA_CLASS_CHANNEL,
+                media_class=MediaClass.CHANNEL,
                 media_content_id=f"{WAM_TUNEIN_FAV_URI_SCHEME}{favorite.contentid}",
-                media_content_type=MEDIA_TYPE_CHANNEL,
+                media_content_type=MediaType.CHANNEL,
                 title=favorite.title,
                 can_play=True,
                 can_expand=False,
@@ -123,14 +119,14 @@ async def async_browse_tunein_favorites(speaker: Speaker) -> BrowseMedia:
         )
 
     return BrowseMedia(
-        media_class=MEDIA_CLASS_DIRECTORY,
+        media_class=MediaClass.DIRECTORY,
         media_content_id=WAM_TUNEIN_FAV_URI_SCHEME,
-        media_content_type=MEDIA_TYPE_CHANNELS,
+        media_content_type=MediaType.CHANNEL,
         title="TuneIn favorites",
         can_play=False,
         can_expand=True,
         children=favorites,
-        children_media_class=MEDIA_CLASS_CHANNEL,
+        children_media_class=MediaClass.CHANNEL,
     )
 
 
@@ -145,27 +141,28 @@ async def async_browse_media(
     hass,
     speaker: Speaker,
     media_content_id: str | None,
-    media_content_type: str | None,
-) -> BrowseMedia | None:
+    media_content_type: MediaType | str | None = None,
+) -> BrowseMedia:
     """Browse media."""
-    # Root level for Samsung WAM
-    if media_content_id is None:
-        return await async_browse_root(hass, speaker)
 
-    # Browse media items from media source integration
-    if media_source.is_media_source_id(media_content_id):
-        return await media_source.async_browse_media(
-            hass, media_content_id, content_filter=media_source_filter
-        )
+    if media_content_id is not None:
+        # Browse media items from media source integration
+        if media_source.is_media_source_id(media_content_id):
+            return await media_source.async_browse_media(
+                hass, media_content_id, content_filter=media_source_filter
+            )
 
-    # TuneIn, Favorites
-    if is_tunein_favorite_media_id(media_content_id):
-        return await async_browse_tunein_favorites(speaker)
+        # TuneIn, Favorites
+        if is_tunein_favorite_media_id(media_content_id):
+            return await async_browse_tunein_favorites(speaker)
 
     # TuneIn, App
     # TODO: To be implemented
     # if is_tunein_app_media_id(media_content_id):
     # return await async_browse_tunein_app(speaker, media_content_id)
 
-    # DNLA on speaker
+    # DLNA on speaker
     # TODO: To be implemented
+
+    # Root level for Samsung WAM
+    return await async_browse_root(hass, speaker)

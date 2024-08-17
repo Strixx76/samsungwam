@@ -1,22 +1,21 @@
 """Config flow for the Samsung Wireless Audio integration."""
+
 from __future__ import annotations
 
 from typing import Final
 from urllib.parse import urlparse
+
+import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
-
-from pywam.speaker import Speaker
-from pywam.lib.const import SPEAKER_MODELS
-
 from homeassistant.components import ssdp
-from homeassistant.config_entries import ConfigFlow
+from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 from homeassistant.const import (
     CONF_HOST,
     CONF_MODEL,
     CONF_PORT,
 )
-from homeassistant.data_entry_flow import FlowResult
-import homeassistant.helpers.config_validation as cv
+from pywam.lib.const import SPEAKER_MODELS
+from pywam.speaker import Speaker
 
 from .const import (
     DOMAIN,
@@ -48,7 +47,7 @@ class SamsungWamConfigFlow(ConfigFlow, domain=DOMAIN):
         self.config_title = ""
         self.config_id = ""
 
-    async def async_validate_device(self, host, port) -> FlowResult | None:
+    async def async_validate_device(self, host, port) -> ConfigFlowResult | None:
         """Validate data by fetching speaker attributes."""
         LOGGER.debug("Trying to connect to speaker at: %s", host)
 
@@ -77,7 +76,9 @@ class SamsungWamConfigFlow(ConfigFlow, domain=DOMAIN):
             updates={CONF_HOST: self.config_data[CONF_HOST]}
         )
 
-    async def async_step_ssdp(self, discovery_info: ssdp.SsdpServiceInfo) -> FlowResult:
+    async def async_step_ssdp(
+        self, discovery_info: ssdp.SsdpServiceInfo
+    ) -> ConfigFlowResult:
         """Handle a flow initialized by ssdp discovery."""
         LOGGER.debug("Samsung multiroom speaker found via SSDP: %s", discovery_info)
 
@@ -120,7 +121,9 @@ class SamsungWamConfigFlow(ConfigFlow, domain=DOMAIN):
             errors=errors,
         )
 
-    async def async_step_confirm(self, user_input: dict | None = None) -> FlowResult:
+    async def async_step_confirm(
+        self, user_input: dict | None = None
+    ) -> ConfigFlowResult:
         """Handle confirmation for adding device."""
 
         # Show confirmation form
