@@ -12,7 +12,6 @@ from homeassistant.components.media_player import (
     MediaPlayerDeviceClass,
     MediaPlayerEntity,
     MediaPlayerEntityFeature,
-    # MediaPlayerEnqueue,
 )
 from homeassistant.components.media_player.browse_media import (
     async_process_play_media_url,
@@ -416,43 +415,154 @@ class SamsungWamPlayer(WamEntity, MediaPlayerEntity):
         """Send seek command."""
         raise NotImplementedError()
 
+    async def _wam_async_get_playlist_first_item(
+        self,
+        url: str,
+    ) -> UrlMediaItem | None:
+        """Get the first item in a playlist."""
+        LOGGER.debug("%s Downloading playlist from: %s", self.device.id, url)
+        try:
+            client = get_async_client(self.hass)
+            # Safety net if one tries to send a large file as playlist.
+            chunks = 0
+            async with client.stream("GET", url) as response:
+                async for data in response.aiter_text(chunk_size=4096):
+                    if chunks > 1:
+                        LOGGER.error("%s Playlist to large", self.device.id)
+                        return
+                    text = data
+                    chunks += 1
+        except Exception:
+            LOGGER.warn("%s Could not get playlist from", self.device.id)
+            return
+
+        try:
+            first_item = parse_playlist(text)[0]
+            LOGGER.debug("%s Title from playlist: %s", self.device.id, first_item.title)
+            LOGGER.debug(
+                "%s Description from playlist: %s",
+                self.device.id,
+                first_item.description,
+            )
+            return first_item
+        except IndexError:
+            LOGGER.warn("%s Playlist did not contain any items", self.device.id)
+            return
+        except Exception as exc:
+            LOGGER.warn("%s Error while parsing playlist: %s", self.device.id, exc)
+            return
+
+    async def _wam_async_get_headers(self, url: str) -> tuple[str, str, str, str]:
+        """Check the http headers to determine how to handle the url."""
+        # TODO: Do we need to mask the URL if it is an HA Core media source?
+        # LOGGER.debug("%s Getting headers for: %s", self.device.id, url)
+        try:
+            client = get_async_client(self.hass)
+            r = await client.head(url)
+        except Exception:
+            # TODO: Do we need to mask the URL if it is an HA Core media source?
+            # LOGGER.error("%s Could not connect to: %s", self.device.id, url)
+            return "", "", "", ""
+        LOGGER.debug("%s Header: %s", self.device.id, r.headers)
+        content_type = r.headers.get("content-type", "").split(";")[0]
+        content_length = int(r.headers.get("content-length", 0))
+        title = r.headers.get("icy-name", "")
+        description = r.headers.get("icy-description", "")
+        if description == "Unspecified description":
+            description = ""
+        LOGGER.debug("%s Content typ: %s", self.device.id, content_type)
+        LOGGER.debug("%s Title from header: %s", self.device.id, title)
+        LOGGER.debug("%s Description from header: %s", self.device.id, description)
+
+        return content_type, content_length, title, description
+
+    async def _wam_async_process_play_media_url(self, url: str) -> UrlMediaItem | None:
+        """Get UrlMediaItem from a given URL to send to speaker."""
+        # Get mime type from http header.
+        c_type, c_length, title, description = await self._wam_async_get_headers(url)
+        # TODO: Should we also try to get it from file suffix?
+        # https://github.com/ctalkington/python-rokuecp/blob/main/src/rokuecp/helpers.py
+        # https://docs.python.org/3/library/mimetypes.html
+
+        # If it is a playable stream we send it to the speaker.
+        if c_type in SUPPORTED_MIME_TYPES:
+            return UrlMediaItem(url=url, title=title, description=description)
+
+        # If it is a playlist we try to parse it.
+        if c_type not in PLAYLIST_MIME_TYPES:
+            return
+        if c_length > 4096:
+            LOGGER.warn(
+                "%s Size of playlist is too large: %s", self.device.id, c_length
+            )
+            return
+        if c_type == "text/html":
+            LOGGER.warn(
+                "%s Playlist format is unknown, but we will try to parse it",
+                self.device.id,
+            )
+        item = await self._wam_async_get_playlist_first_item(url)
+        if item is None:
+            LOGGER.warn("%s Could not parser playlist", self.device.id)
+            return
+
+        c_type, c_length, title, description = await self._wam_async_get_headers(item)
+        if c_type in SUPPORTED_MIME_TYPES:
+            return UrlMediaItem(
+                url=item.url,
+                title=item.title or title,
+                description=item.description or description,
+                duration=item.duration,
+            )
+
+    @async_check_connection
     async def async_play_media(
         self,
-        media_type: str,
+        media_type: MediaType | str,
         media_id: str,
-        # enqueue: MediaPlayerEnqueue | None = None,
-        # announce: bool | None = None,
         **kwargs: Any,
     ) -> None:
         """Play a piece of media."""
+        # TODO: Examine **kwargs, is it only extra for integration specific
+        # implementations of service calls?
+        # TODO: Examine media_type : media_type: MediaType | str
+        # core/homeassistant/components/panasonic_viera/media_player.py
+        # core/homeassistant/components/roku/media_player.py
+        # TODO: Examine PlayMedia from async_process_play_media_url()
+        # it has a .url and a .mime_type attribute.
+
         # Media Sources
         if media_source.is_media_source_id(media_id):
-            play_item = await media_source.async_resolve_media(self.hass, media_id)
+            media_type = MediaType.MUSIC
+            play_item = await media_source.async_resolve_media(
+                self.hass, media_id, self.entity_id
+            )
             url = async_process_play_media_url(self.hass, play_item.url)
-            LOGGER.debug("Sending url: %s", url)
-            LOGGER.debug("With media type: %s", media_type)
-            # Examples of url sent from Media Source:
-            # http://webradio.dbmedia.se/streams/crr96.pls
-            # http://fm02-ice.stream.khz.se/fm02_mp3
-            # http://172.17.0.2:8123/api/tts_proxy/4f662742580deb5f5d4267d399fb5b5eddd3a1ed_en_-_google_translate.mp3?authSig=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJkOGRmYTE0ZTFkZWQ0MWQ1OTMyZjU2ZDQ1MmNlNjMwZSIsInBhdGgiOiIvYXBpL3R0c19wcm94eS80ZjY2Mjc0MjU4MGRlYjVmNWQ0MjY3ZDM5OWZiNWI1ZWRkZDNhMWVkX2VuXy1fZ29vZ2xlX3RyYW5zbGF0ZS5tcDMiLCJpYXQiOjE2NTUzNjE3NDAsImV4cCI6MTY1NTQ0ODE0MH0.mMmODussimHD0bxbrYhPWC5GOKzxxI-i6-JawXv1scg
-            # await self.speaker.play_url(url)
+            media_item = await self._wam_async_process_play_media_url(url)
+            # TODO: Do we need to mask the URL if it is an HA Core media source?
+            # "%s Speaker doesn't support streaming of: %s", self.device.id, url
+            if media_item is None:
+                LOGGER.warn(
+                    "%s Speaker doesn't support streaming of this media", self.device.id
+                )
+                return
+            LOGGER.debug("%s Sending stream to speaker", self.device.id)
+            await self.speaker.play_url(media_item)
 
         # TuneIn, Favorites
         elif media_browser.is_tunein_favorite_media_id(media_id):
-            play_item = media_browser.resolve_media(media_id)
+            id = media_browser.resolve_media(media_id)
             for favorite in self.speaker.attribute.tunein_presets:
-                if favorite.contentid == play_item:
+                if favorite.contentid == id:
                     await self.speaker.play_preset(favorite)
                     return
-            LOGGER.error(
-                "%s TuneIn favorite not found on the speaker", self.coordinator.id
-            )
+            LOGGER.error("%s TuneIn favorite not found on the speaker", self.device.id)
 
         # Error - media could not be played
         else:
             LOGGER.error(
                 "%s Media (%s with type %s) is not supported",
-                self.coordinator.id,
+                self.device.id,
                 media_id,
                 media_type,
             )
