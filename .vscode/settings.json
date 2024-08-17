@@ -1,18 +1,26 @@
 {
+    "python.analysis.extraPaths": [
+        "/home/vscode/package"
+    ],
+    "remote.localPortHost": "allInterfaces",
     "cSpell.words": [
         "aiohttp",
+        "contentid",
         "devcontainer",
+        "dlna",
         "hacs",
         "hass",
         "HASS",
         "homeassistant",
-        "contentid",
-        "dlna",
         "multiroom",
         "pywam",
         "samsungwam",
         "ssdp",
         "tunein",
+        "ungroup",
+        "ungrouping",
+        "unjoin",
+        "unjoining",
         "upnp"
     ],
 }

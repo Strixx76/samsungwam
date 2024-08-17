@@ -6,14 +6,13 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 # Store config directory
-readonly config_dir="${PWD}/.devcontainer/preconfig"
+readonly config_dir="${PWD}/.devcontainer/config"
 
 
-# Check if preconf is set up
+# Create configs if not existing
 if [[ ! -d "${config_dir}" ]]; then
-    echo "Preconfiguration not yet done!" >&2
-    echo "Please run task 'Configure Home Assistant' first." >&2
-    exit 1
+    mkdir -p "${config_dir}"
+    hass --config "${config_dir}" --script ensure_config
 fi
 
 
@@ -27,12 +26,8 @@ if ! [[ -d "${config_dir}/custom_components/${INTEGRATION_PATH}" ]]; then
 fi
 
 
-# Start Home Assistant
-echo " " >&2
-echo " " >&2
-echo "**************************" >&2
-echo "* Login with admin/admin *" >&2
-echo "**************************" >&2
-echo " " >&2
+# Install local pip packages
+pip install -e /home/vscode/package --config-settings editable_mode=strict
 
-hass --c "${config_dir}" --debug
+# Start Home Assistant
+hass --c "${config_dir}" --debug --skip-pip-packages "${PIP_PACKAGE}"

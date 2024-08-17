@@ -4,10 +4,12 @@
         {
             // Disable cov to allow breakpoints when launched from VS Code Python
             "name": "Python: Debug Tests",
-            "type": "python",  // Doesn't work if we replace with debugpy
+            "type": "python", // Doesn't work if we replace with debugpy
             "request": "launch",
             "program": "${file}",
-            "purpose": ["debug-test"],
+            "purpose": [
+                "debug-test"
+            ],
             "console": "integratedTerminal",
             "justMyCode": false,
             "env": {

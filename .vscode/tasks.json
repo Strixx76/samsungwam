@@ -18,6 +18,24 @@
             "type": "shell",
             "command": ".devcontainer/start_hass.sh",
             "problemMatcher": []
+        },
+        {
+            "label": "Start Home Assistant with preconf and local pip package",
+            "type": "shell",
+            "command": ".devcontainer/start_hass_preconf_local_pip.sh",
+            "problemMatcher": []
+        },
+        {
+            "label": "Start Home Assistant with local pip package",
+            "type": "shell",
+            "command": ".devcontainer/start_hass_local_pip.sh",
+            "problemMatcher": []
+        },
+        {
+            "label": "Check versions",
+            "type": "shell",
+            "command": "python ./scripts/versions.py -p",
+            "problemMatcher": []
         }
     ]
 }

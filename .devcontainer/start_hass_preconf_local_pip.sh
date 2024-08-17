@@ -26,6 +26,8 @@ if ! [[ -d "${config_dir}/custom_components/${INTEGRATION_PATH}" ]]; then
     ln -s "${PWD}/custom_components/${INTEGRATION_PATH}" "${config_dir}/custom_components/${INTEGRATION_PATH}"
 fi
 
+# Install local pip packages
+pip install -e /home/vscode/package --config-settings editable_mode=strict
 
 # Start Home Assistant
 echo " " >&2
@@ -34,5 +36,4 @@ echo "**************************" >&2
 echo "* Login with admin/admin *" >&2
 echo "**************************" >&2
 echo " " >&2
-
-hass --c "${config_dir}" --debug
+hass --c "${config_dir}" --debug --skip-pip-packages "${PIP_PACKAGE}"

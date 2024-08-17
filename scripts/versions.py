@@ -164,8 +164,11 @@ def get_integration_versions() -> IntegrationVersions:
 
     with open(CHANGELOG_FILE) as txt_file:
         for line in txt_file:
-            if line.startswith("# "):
-                integration_versions.changelog_version = Version(line.split()[1])
+            if line.startswith("## "):
+                ver = line.split()[1].replace("[", "").replace("]", "")
+                if ver == "unreleased":
+                    continue
+                integration_versions.changelog_version = Version(ver)
                 break
 
     return integration_versions
