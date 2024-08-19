@@ -9,6 +9,9 @@ jobs:
     permissions:
       contents: write
     steps:
+      - name: 📥 Checkout the repository
+        uses: actions/checkout@v4
+        
       - name: '📦 Add zip file'
         run: |
           cd ${{github.workspace}}/custom_components/
