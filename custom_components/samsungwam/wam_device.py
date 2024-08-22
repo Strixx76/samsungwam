@@ -55,7 +55,6 @@ class SamsungWamDevice:
         self.speaker = Speaker(entry.data[CONF_HOST], entry.data[CONF_PORT])
         self._update_callbacks: set[WamEntityCallback] = set()
         self._host = entry.data.get(CONF_HOST, "")
-        self._connected: bool = False
         self._checking_connection: bool = False
         self._reconnecting: bool = False
 
@@ -84,7 +83,7 @@ class SamsungWamDevice:
     @property
     def is_connected(self) -> bool:
         """Returns true if device is connected."""
-        return self._connected
+        return self.speaker.is_connected
 
     @property
     def name(self) -> str:
@@ -162,7 +161,6 @@ class SamsungWamDevice:
         if self._reconnecting:
             return
         LOGGER.error("%s Connection to speaker lost", self.id)
-        self._connected = False
         self.update_all_entity_states()
         self.coordinator.update_hass_states()
         await self._reconnect_until_connected()
@@ -176,11 +174,8 @@ class SamsungWamDevice:
             LOGGER.exception("Could not connect to speaker: %s", self.id)
             raise ConnectionError(f"{self.id} Could not connect to speaker") from exc
 
-        self._connected = True
-
     async def disconnect(self) -> None:
         """Disconnect from speaker."""
-        self._connected = False
         try:
             await self.speaker.disconnect()
         except Exception as exc:
