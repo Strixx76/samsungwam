@@ -1,5 +1,10 @@
 ## [unreleased]
 
+## [0.1.0rc2] (2024-08-22)
+
+- Fixed check connection decorator bug
+- Changed online property to pywam
+
 ## [0.1.0rc1] (2024-08-16)
 
 - Implemented a coordinator to handle the speaker
