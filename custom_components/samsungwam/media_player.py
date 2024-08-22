@@ -352,27 +352,27 @@ class SamsungWamPlayer(WamEntity, MediaPlayerEntity):
         """Set volume level, range 0..1."""
         await self.speaker.set_volume(int(volume * 100))
 
-    @async_check_connection
+    @async_check_connection(False)
     async def async_media_play(self) -> None:
         """Send play command."""
         await self.speaker.cmd_play()
 
-    @async_check_connection
+    @async_check_connection(False)
     async def async_media_pause(self) -> None:
         """Send pause command."""
         await self.speaker.cmd_pause()
 
-    @async_check_connection
+    @async_check_connection(False)
     async def async_media_stop(self) -> None:
         """Send stop command."""
         await self.speaker.cmd_stop()
 
-    @async_check_connection
+    @async_check_connection(False)
     async def async_media_previous_track(self) -> None:
         """Send previous track command."""
         await self.speaker.cmd_previous()
 
-    @async_check_connection
+    @async_check_connection(False)
     async def async_media_next_track(self) -> None:
         """Send next track command."""
         await self.speaker.cmd_next()
@@ -481,7 +481,7 @@ class SamsungWamPlayer(WamEntity, MediaPlayerEntity):
                 duration=item.duration,
             )
 
-    @async_check_connection
+    @async_check_connection(False)
     async def async_play_media(
         self,
         media_type: MediaType | str,
@@ -549,12 +549,12 @@ class SamsungWamPlayer(WamEntity, MediaPlayerEntity):
         """Clear players playlist."""
         raise NotImplementedError()
 
-    @async_check_connection
+    @async_check_connection(False)
     async def async_set_shuffle(self, shuffle) -> None:
         """Enable/disable shuffle mode."""
         await self.speaker.set_shuffle(shuffle)
 
-    @async_check_connection
+    @async_check_connection(False)
     async def async_set_repeat(self, repeat) -> None:
         """Set repeat mode."""
         await self.speaker.set_repeat_mode(REPEAT_TO_WAM[repeat])
