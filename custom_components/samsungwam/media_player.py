@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import datetime as dt
+import mimetypes
 from typing import TYPE_CHECKING, Any
 
 from homeassistant.components import media_source
@@ -23,7 +24,7 @@ from homeassistant.components.media_player.const import (
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.httpx_client import get_async_client
+from homeassistant.helpers.network import is_hass_url
 from pywam.lib.const import Feature
 from pywam.lib.playlist import PLAYLIST_MIME_TYPES
 from pywam.lib.url import (
@@ -383,47 +384,134 @@ class SamsungWamPlayer(WamEntity, MediaPlayerEntity):
         raise NotImplementedError()
 
     @async_check_connection(False)
-    async def async_play_media(
+    async def async_play_media(  # noqa: C901
         self,
         media_type: MediaType | str,
         media_id: str,
         **kwargs: Any,
     ) -> None:
-        """Play a piece of media."""
-        # TODO: Examine **kwargs, is it only extra for integration specific
-        # implementations of service calls?
-        # TODO: Examine media_type : media_type: MediaType | str
-        # core/homeassistant/components/panasonic_viera/media_player.py
-        # core/homeassistant/components/roku/media_player.py
-        # TODO: Examine PlayMedia from async_process_play_media_url()
-        # it has a .url and a .mime_type attribute.
+        """Play a piece of media.
+
+        Arguments:
+            media_type:
+                A media type. Must be one of `music` or `playlist`.
+                For `music` media_id should be a url pointing to a
+                supported media format and codec.
+                For `playlist` media_id should be a url pointing to
+                supported playlist format.
+            media_id:
+                A media identifier.
+            **kwargs:
+                This integration doesn't support more arguments. To see
+                what is available for the future, please visit:
+                https://www.home-assistant.io/integrations/media_player/
+
+        """
+        LOGGER.debug(
+            "%s media_type = %s, media_id = %s", self.device.id, media_type, media_id
+        )
 
         # Media Sources
         if media_source.is_media_source_id(media_id):
-            media_type = MediaType.MUSIC
             play_item = await media_source.async_resolve_media(
                 self.hass, media_id, self.entity_id
             )
+            LOGGER.debug(
+                "%s PlayMedia.mime_type: %s, PlayMedia.url: %s",
+                self.device.id,
+                play_item.mime_type,
+                play_item.url,
+            )
             url = async_process_play_media_url(self.hass, play_item.url)
-            media_item = await self._wam_async_process_play_media_url(url)
-            # TODO: Do we need to mask the URL if it is an HA Core media source?
-            # "%s Speaker doesn't support streaming of: %s", self.device.id, url
-            if media_item is None:
-                LOGGER.warn(
-                    "%s Speaker doesn't support streaming of this media", self.device.id
+
+            # If URL points to Home Assistant (local media and TTS?) we
+            # trust the PlayMedia mime type.
+            if is_hass_url(self.hass, url):
+                if play_item.mime_type in SUPPORTED_MIME_TYPES:
+                    LOGGER.debug(
+                        "%s Sending Home Assistant source stream to speaker",
+                        self.device.id,
+                    )
+                    media_item = UrlMediaItem(url)
+                    await self.speaker.play_url(media_item)
+                elif play_item.mime_type in PLAYLIST_MIME_TYPES:
+                    LOGGER.debug(
+                        "%s media_id is a playlist - redirecting", self.device.id
+                    )
+                    await self.async_play_media(
+                        media_type=MediaType.PLAYLIST, media_id=url
+                    )
+            # Otherwise we need to guess mime type or check http header.
+            # Radio Stations Integration can return wrong mime type when
+            # when it is a playlist.
+            else:
+                LOGGER.debug(
+                    "%s media_id is not a local url - we need to check mime type",
+                    self.device.id,
                 )
-                return
-            LOGGER.debug("%s Sending stream to speaker", self.device.id)
-            await self.speaker.play_url(media_item)
+                header = await async_get_http_headers(self, play_item.url)
+                mime = mimetypes.guess_type(play_item.url)[0]
+                if not mime:
+                    mime = header.content_type
+                if mime in SUPPORTED_MIME_TYPES:
+                    await self.async_play_media(
+                        media_type=MediaType.MUSIC, media_id=play_item.url
+                    )
+                elif mime in PLAYLIST_MIME_TYPES:
+                    await self.async_play_media(
+                        media_type=MediaType.PLAYLIST, media_id=play_item.url
+                    )
+            return
 
         # TuneIn, Favorites
-        elif media_browser.is_tunein_favorite_media_id(media_id):
+        if media_browser.is_tunein_favorite_media_id(media_id):
             id = media_browser.resolve_media(media_id)
             for favorite in self.speaker.attribute.tunein_presets:
                 if favorite.contentid == id:
                     await self.speaker.play_preset(favorite)
                     return
-            LOGGER.error("%s TuneIn favorite not found on the speaker", self.device.id)
+            raise TypeError(
+                f"{self.device.id} TuneIn favorite not found on the speaker"
+            )
+
+        # URL (Music)
+        if media_type == "music":
+            LOGGER.debug("%s Will se if we can play: %s", self.device.id, media_id)
+            header = await async_get_http_headers(self, media_id)
+            mime = mimetypes.guess_type(media_id)[0]
+            if not mime:
+                mime = header.content_type
+            LOGGER.debug("%s Mime type: %s", self.device.id, mime)
+            if mime in SUPPORTED_MIME_TYPES:
+                LOGGER.debug("%s Sending URL to speaker: %s", self.device.id, media_id)
+                media_item = UrlMediaItem(media_id, header.title, header.description)
+                await self.speaker.play_url(media_item)
+                return
+            else:
+                raise TypeError(
+                    f"{self.device.id} Given url is not a supported media type"
+                )
+
+        # Playlist
+        if media_type == "playlist":
+            LOGGER.debug(
+                "%s Will se if we can parse playlist: %s", self.device.id, media_id
+            )
+            header = await async_get_http_headers(self, media_id)
+            mime = mimetypes.guess_type(media_id)[0]
+            if not mime:
+                mime = header.content_type
+            LOGGER.debug("%s Mime type: %s", self.device.id, mime)
+            if mime in PLAYLIST_MIME_TYPES:
+                # TODO: Make use of parsed media information from playlist.
+                # Todo this we need to implement the `extra` argument.
+                media_item = await async_get_playlist_item(self, media_id, 1)
+                await self.async_play_media(
+                    media_type=MediaType.MUSIC, media_id=media_item.url
+                )
+                return
+            else:
+                raise TypeError(f"{self.device.id} Playlist format is not supported")
 
         # Error - media could not be played
         else:
