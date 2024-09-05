@@ -1,5 +1,9 @@
 ## [unreleased]
 
+## [0.1.0rc3] (2024-09-05)
+
+- Changed play media to trust Home Assistant URLs
+
 ## [0.1.0rc2] (2024-08-22)
 
 - Fixed check connection decorator bug

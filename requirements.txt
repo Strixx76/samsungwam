@@ -1,2 +1,2 @@
 homeassistant==2024.6.1
-pywam==0.1.0rc2
+pywam==0.1.0rc3
