@@ -30,15 +30,28 @@ def async_check_connection(timeout: bool = False):
             device: SamsungWamDevice = self.device
             try:
                 response = await func(self, *args, **kwargs)
+            # TODO: We need to change to user exceptions for all errors
+            # in pywam to not catch errors in samsungwam code.
             except ConnectionError as exc:
-                LOGGER.debug("%s %s", device.id, exc)
+                LOGGER.debug(
+                    "%s (@async_check_connection) ConnectionError: %s", device.id, exc
+                )
                 await device.check_connection()
             except ApiCallTimeoutError as exc:
-                LOGGER.debug("%s %s", device.id, exc)
+                LOGGER.debug(
+                    "%s (@async_check_connection) ApiCallTimeoutError:%s",
+                    device.id,
+                    exc,
+                )
                 if timeout:
                     await device.check_connection()
+            # TODO: We need to change to user exceptions for all errors
+            # in pywam to not catch errors in samsungwam code.
             except Exception as exc:
-                LOGGER.error("%s Error sending command to speaker: %s", device.id, exc)
+                LOGGER.error(
+                    "%s (@async_check_connection) Exception: %s", device.id, exc
+                )
+                LOGGER.exception(exc)
             else:
                 return response
 
