@@ -5,6 +5,7 @@
     "remote.localPortHost": "allInterfaces",
     "cSpell.words": [
         "aiohttp",
+        "aiter",
         "contentid",
         "devcontainer",
         "dlna",
@@ -12,6 +13,7 @@
         "hass",
         "HASS",
         "homeassistant",
+        "httpx",
         "multiroom",
         "pywam",
         "samsungwam",
