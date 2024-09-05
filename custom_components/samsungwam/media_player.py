@@ -25,10 +25,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.httpx_client import get_async_client
 from pywam.lib.const import Feature
-from pywam.lib.playlist import (
-    PLAYLIST_MIME_TYPES,
-    parse_playlist,
-)
+from pywam.lib.playlist import PLAYLIST_MIME_TYPES
 from pywam.lib.url import (
     SUPPORTED_MIME_TYPES,
     UrlMediaItem,
@@ -38,6 +35,10 @@ from pywam.speaker import Speaker
 from . import media_browser
 from .const import LOGGER
 from .wam_entity import WamEntity, async_check_connection
+from .wam_url import (
+    async_get_http_headers,
+    async_get_playlist_item,
+)
 
 if TYPE_CHECKING:
     from . import WamConfigEntry
@@ -380,106 +381,6 @@ class SamsungWamPlayer(WamEntity, MediaPlayerEntity):
     async def async_media_seek(self, position):
         """Send seek command."""
         raise NotImplementedError()
-
-    async def _wam_async_get_playlist_first_item(
-        self,
-        url: str,
-    ) -> UrlMediaItem | None:
-        """Get the first item in a playlist."""
-        LOGGER.debug("%s Downloading playlist from: %s", self.device.id, url)
-        try:
-            client = get_async_client(self.hass)
-            # Safety net if one tries to send a large file as playlist.
-            chunks = 0
-            async with client.stream("GET", url) as response:
-                async for data in response.aiter_text(chunk_size=4096):
-                    if chunks > 1:
-                        LOGGER.error("%s Playlist to large", self.device.id)
-                        return
-                    text = data
-                    chunks += 1
-        except Exception:
-            LOGGER.warn("%s Could not get playlist from", self.device.id)
-            return
-
-        try:
-            first_item = parse_playlist(text)[0]
-            LOGGER.debug("%s Title from playlist: %s", self.device.id, first_item.title)
-            LOGGER.debug(
-                "%s Description from playlist: %s",
-                self.device.id,
-                first_item.description,
-            )
-            return first_item
-        except IndexError:
-            LOGGER.warn("%s Playlist did not contain any items", self.device.id)
-            return
-        except Exception as exc:
-            LOGGER.warn("%s Error while parsing playlist: %s", self.device.id, exc)
-            return
-
-    async def _wam_async_get_headers(self, url: str) -> tuple[str, str, str, str]:
-        """Check the http headers to determine how to handle the url."""
-        # TODO: Do we need to mask the URL if it is an HA Core media source?
-        # LOGGER.debug("%s Getting headers for: %s", self.device.id, url)
-        try:
-            client = get_async_client(self.hass)
-            r = await client.head(url)
-        except Exception:
-            # TODO: Do we need to mask the URL if it is an HA Core media source?
-            # LOGGER.error("%s Could not connect to: %s", self.device.id, url)
-            return "", "", "", ""
-        LOGGER.debug("%s Header: %s", self.device.id, r.headers)
-        content_type = r.headers.get("content-type", "").split(";")[0]
-        content_length = int(r.headers.get("content-length", 0))
-        title = r.headers.get("icy-name", "")
-        description = r.headers.get("icy-description", "")
-        if description == "Unspecified description":
-            description = ""
-        LOGGER.debug("%s Content typ: %s", self.device.id, content_type)
-        LOGGER.debug("%s Title from header: %s", self.device.id, title)
-        LOGGER.debug("%s Description from header: %s", self.device.id, description)
-
-        return content_type, content_length, title, description
-
-    async def _wam_async_process_play_media_url(self, url: str) -> UrlMediaItem | None:
-        """Get UrlMediaItem from a given URL to send to speaker."""
-        # Get mime type from http header.
-        c_type, c_length, title, description = await self._wam_async_get_headers(url)
-        # TODO: Should we also try to get it from file suffix?
-        # https://github.com/ctalkington/python-rokuecp/blob/main/src/rokuecp/helpers.py
-        # https://docs.python.org/3/library/mimetypes.html
-
-        # If it is a playable stream we send it to the speaker.
-        if c_type in SUPPORTED_MIME_TYPES:
-            return UrlMediaItem(url=url, title=title, description=description)
-
-        # If it is a playlist we try to parse it.
-        if c_type not in PLAYLIST_MIME_TYPES:
-            return
-        if c_length > 4096:
-            LOGGER.warn(
-                "%s Size of playlist is too large: %s", self.device.id, c_length
-            )
-            return
-        if c_type == "text/html":
-            LOGGER.warn(
-                "%s Playlist format is unknown, but we will try to parse it",
-                self.device.id,
-            )
-        item = await self._wam_async_get_playlist_first_item(url)
-        if item is None:
-            LOGGER.warn("%s Could not parser playlist", self.device.id)
-            return
-
-        c_type, c_length, title, description = await self._wam_async_get_headers(item)
-        if c_type in SUPPORTED_MIME_TYPES:
-            return UrlMediaItem(
-                url=item.url,
-                title=item.title or title,
-                description=item.description or description,
-                duration=item.duration,
-            )
 
     @async_check_connection(False)
     async def async_play_media(
