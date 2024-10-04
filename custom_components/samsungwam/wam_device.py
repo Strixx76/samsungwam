@@ -104,7 +104,7 @@ class SamsungWamDevice:
                 await self.speaker.update()
 
             if self.is_connected:
-                LOGGER.error("%s Connection to speaker restored", self.id)
+                LOGGER.warning("%s Connection to speaker restored", self.id)
                 self.update_all_entity_states()
                 self.coordinator.update_hass_states()
                 self._reconnecting = False
@@ -160,7 +160,7 @@ class SamsungWamDevice:
         """Lost connection is discovered."""
         if self._reconnecting:
             return
-        LOGGER.error("%s Connection to speaker lost", self.id)
+        LOGGER.warning("%s Connection to speaker lost", self.id)
         self.update_all_entity_states()
         self.coordinator.update_hass_states()
         await self._reconnect_until_connected()
