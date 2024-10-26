@@ -1,5 +1,10 @@
 ## [unreleased]
 
+
+## [0.1.0rc4] (2024-10-26
+
+- Better log levels and exception handling
+
 ## [0.1.0rc3] (2024-09-05)
 
 - Changed play media to trust Home Assistant URLs
@@ -28,3 +33,6 @@
 [0.0.1]: https://github.com/Strixx76/samsungwam/tree/v0.0.1
 [0.0.2]: https://github.com/Strixx76/samsungwam/tree/v0.0.2
 [0.1.0rc1]: https://github.com/Strixx76/samsungwam/tree/v0.1.0rc1
+[0.1.0rc2]: https://github.com/Strixx76/samsungwam/tree/v0.1.0rc2
+[0.1.0rc3]: https://github.com/Strixx76/samsungwam/tree/v0.1.0rc3
+[0.1.0rc4]: https://github.com/Strixx76/samsungwam/tree/v0.1.0rc4
