@@ -6,8 +6,9 @@ import functools
 from typing import TYPE_CHECKING, Any
 
 from homeassistant.core import callback
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity import DeviceInfo, Entity
-from pywam.lib.exceptions import ApiCallTimeoutError
+from pywam.lib.exceptions import ApiCallTimeoutError, FeatureNotSupportedError
 
 from .const import LOGGER
 
@@ -45,13 +46,8 @@ def async_check_connection(timeout: bool = False):
                 )
                 if timeout:
                     await device.check_connection()
-            # TODO: We need to change to user exceptions for all errors
-            # in pywam to not catch errors in samsungwam code.
-            except Exception as exc:
-                LOGGER.error(
-                    "%s (@async_check_connection) Exception: %s", device.id, exc
-                )
-                LOGGER.exception(exc)
+            except FeatureNotSupportedError as exc:
+                raise HomeAssistantError(f"{exc}") from None
             else:
                 return response
 
