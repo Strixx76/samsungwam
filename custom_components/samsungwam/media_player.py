@@ -59,9 +59,12 @@ SUPPORTED_FEATURES = (
     | MediaPlayerEntityFeature.BROWSE_MEDIA
     | MediaPlayerEntityFeature.SELECT_SOUND_MODE
     | MediaPlayerEntityFeature.GROUPING
+    | MediaPlayerEntityFeature.PLAY
 )
+# PLAY is always supported as a workaround for Mini Media Player
+# who calls play_pause when pause is clicked, and not pause.
 FEATURES_MAPPING = {
-    Feature.PLAY: MediaPlayerEntityFeature.PLAY,
+    # Feature.PLAY: MediaPlayerEntityFeature.PLAY,
     Feature.PAUSE: MediaPlayerEntityFeature.PAUSE,
     Feature.STOP: MediaPlayerEntityFeature.STOP,
     Feature.PREV: MediaPlayerEntityFeature.PREVIOUS_TRACK,
