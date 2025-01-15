@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 import datetime as dt
 import mimetypes
 from typing import TYPE_CHECKING, Any
@@ -23,6 +22,7 @@ from homeassistant.components.media_player.const import (
     RepeatMode,
 )
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.network import is_hass_url
 from pywam.lib.const import Feature
@@ -31,10 +31,10 @@ from pywam.lib.url import (
     SUPPORTED_MIME_TYPES,
     UrlMediaItem,
 )
-from pywam.speaker import Speaker
 
 from . import media_browser
 from .const import LOGGER
+from .exceptions import WamGroupError
 from .wam_entity import WamEntity, async_check_connection
 from .wam_url import (
     async_get_http_headers,
@@ -101,7 +101,6 @@ class SamsungWamPlayer(WamEntity, MediaPlayerEntity):
     ) -> None:
         """Initialize the media player."""
         super().__init__(device)
-        self._unjoining_group: bool = False
 
     @property
     def wam_monitored_attributes(self) -> set[str] | None:
@@ -402,6 +401,7 @@ class SamsungWamPlayer(WamEntity, MediaPlayerEntity):
                 supported media format and codec.
                 For `playlist` media_id should be a url pointing to
                 supported playlist format.
+                `channel` is for favorites, but not used yet.
             media_id:
                 A media identifier.
             **kwargs:
@@ -410,6 +410,7 @@ class SamsungWamPlayer(WamEntity, MediaPlayerEntity):
                 https://www.home-assistant.io/integrations/media_player/
 
         """
+        # TODO: Implement extra arguments for title and thumb.
         LOGGER.debug(
             "%s media_type = %s, media_id = %s", self.device.id, media_type, media_id
         )
@@ -427,7 +428,7 @@ class SamsungWamPlayer(WamEntity, MediaPlayerEntity):
             )
             url = async_process_play_media_url(self.hass, play_item.url)
 
-            # If URL points to Home Assistant (local media and TTS?) we
+            # If URL points to Home Assistant (local media and TTS) we
             # trust the PlayMedia mime type.
             if is_hass_url(self.hass, url):
                 if play_item.mime_type in SUPPORTED_MIME_TYPES:
@@ -507,7 +508,7 @@ class SamsungWamPlayer(WamEntity, MediaPlayerEntity):
             LOGGER.debug("%s Mime type: %s", self.device.id, mime)
             if mime in PLAYLIST_MIME_TYPES:
                 # TODO: Make use of parsed media information from playlist.
-                # Todo this we need to implement the `extra` argument.
+                # To do this we need to implement the `extra` argument.
                 media_item = await async_get_playlist_item(self, media_id, 1)
                 await self.async_play_media(
                     media_type=MediaType.MUSIC, media_id=media_item.url
@@ -564,153 +565,39 @@ class SamsungWamPlayer(WamEntity, MediaPlayerEntity):
             media_content_type,
         )
 
-    def _wam__get_speakers_to_group(self, entity_ids: list[str]) -> list[Speaker]:
-        """Get the Speaker objects to group."""
-        # Check that the media player is a SamsungWamPlayer and that
-        # they are not already in another group.
-        speakers: list[Speaker] = []
-        for entity_id in entity_ids:
-            if entity_id == self.entity_id:
-                # This media player can be in list but should not be called
-                continue
-            try:
-                player = self.device.coordinator.get_media_player(entity_id)
-            except KeyError:
-                LOGGER.error(
-                    "%s %s is not a SamsungWam media player", self.device.id, entity_id
-                )
-                continue
-            if not player.available:
-                LOGGER.error(
-                    "%s %s is not available (online) at the moment",
-                    self.device.id,
-                    entity_id,
-                )
-                continue
-            if player.speaker.attribute.is_master:
-                LOGGER.error(
-                    "%s %s is already a master and can't be grouped",
-                    self.device.id,
-                    entity_id,
-                )
-                continue
-            if player.speaker.attribute.is_slave:
-                if player.speaker.attribute.master_ip != self.speaker.ip:
-                    LOGGER.error(
-                        "%s %s is slave in another group", self.device.id, entity_id
-                    )
-                    continue
-            speakers.append(player.speaker)
-        return speakers
-
     async def async_join_players(self, group_members: list[str]) -> None:
         """Join `group_members` as a player group with the current player."""
-        # There should be no grouping operation in progress.
-        if self.device.coordinator.grouping_in_progress:
-            LOGGER.warn("%s Grouping operation is already in progress", self.device.id)
-            return
+        LOGGER.debug("%s Join players: %s", self.device.id, group_members)
 
-        # A slave can't become a master.
-        if self.speaker.attribute.is_slave:
-            LOGGER.error("%s Speaker is already slave in a group", self.device.id)
-            return
+        # Remove this media player from the group_members list
+        if self.entity_id in group_members:
+            group_members = [i for i in group_members if i != self.entity_id]
 
-        # If this player is already a master we need to check that all
-        # group members also are media players in HA to not break things.
-        if self.speaker.attribute.is_master:
-            if len(self.group_members) != self.speaker.attribute.number_of_speakers:
-                LOGGER.error(
-                    "%s All speakers in group is not available in Home Assistant",
-                    self.device.id,
-                )
-                return
-
-        # This can be called to add more speakers to the group. Then the
-        # speakers list should be updated with the speakers already in
-        # the group.
-        if self.speaker.attribute.is_master:
-            group_members.extend(self.group_members)
-
-        speakers = self._wam__get_speakers_to_group(group_members)
-        if len(speakers) == 0:
-            LOGGER.error("%s No speakers to group", self.device.id)
-            return
-
-        self.device.coordinator.grouping_in_progress = True
-
+        # Call coordinator to perform the grouping operation
         try:
-            await self.speaker.create_group(speakers)
+            self.device.coordinator.add_speakers_to_group(self.entity_id, group_members)
+        except WamGroupError:
+            raise ServiceValidationError("Error while grouping speakers") from None
         except Exception as exc:
-            LOGGER.error("%s Error while grouping speakers: %s", self.device.id, exc)
-        finally:
-            # We need to update all media players to get correct groups
-            # but we have to wait because the slaves responds to the master.
-            await asyncio.sleep(1)
-            self.device.coordinator.update_hass_states()
-            self.device.coordinator.grouping_in_progress = False
+            LOGGER.error("%s Error while grouping speakers", self.device.id)
+            raise HomeAssistantError("Error while grouping speakers") from exc
 
     async def async_unjoin_player(self) -> None:
         """Remove this player from any group."""
-        if not self.speaker.attribute.is_grouped:
-            LOGGER.warn("%s Media player is not part of a group", self.device.id)
-            return
+        LOGGER.debug("%s Unjoin player", self.device.id)
 
-        # There should be no grouping operation in progress.
-        if self.device.coordinator.grouping_in_progress:
-            LOGGER.warn("%s Grouping operation is already in progress", self.device.id)
-            return
-
-        # If speaker is master we delete the group
+        # Ignore unjoin calls to masters to support mini media player
         if self.speaker.attribute.is_master:
-            self._unjoining_group = True
-            slaves = [
-                self.device.coordinator.get_media_player(group_member).speaker
-                for group_member in self.group_members[1:]
-            ]
-            if len(self.group_members) != self.speaker.attribute.number_of_speakers:
-                LOGGER.error(
-                    "%s All speakers in group is not available in Home Assistant",
-                    self.device.id,
-                )
-                return
-            try:
-                await self.speaker.delete_group(slaves)
-            except Exception as exc:
-                LOGGER.error(
-                    "%s Error while ungrouping speakers: %s", self.device.id, exc
-                )
-            finally:
-                self._unjoining_group = False
+            LOGGER.debug("%s Media player is master, ignoring unjoin", self.device.id)
+            return
 
-        # If this player is slave, leave the group
-        else:
-            # Mini media player calls this for all speakers in the group, so
-            # we have to check that the group isn't deleted by the master.
-            await asyncio.sleep(2)
-            if not self.speaker.attribute.is_grouped:
-                return
-            if self.device.coordinator.get_media_player(
-                self.group_members[0]
-            )._unjoining_group:
-                return
-
-            master = self.device.coordinator.get_media_player(
-                self.group_members[0]
-            ).speaker
-            slaves = [
-                self.device.coordinator.get_media_player(group_member).speaker
-                for group_member in self.group_members[1:]
-                if group_member != self.entity_id
-            ]
-            if len(self.group_members) != self.speaker.attribute.number_of_speakers:
-                LOGGER.error(
-                    "%s All speakers in group is not available in Home Assistant",
-                    self.device.id,
-                )
-                return
-            await self.speaker.leave_group(master, slaves)
-
-        # We need to update all media players to get correct groups
-        # but we have to wait because the slaves responds to the master.
-        await asyncio.sleep(1)
-        self.device.coordinator.update_hass_states()
+        # Call coordinator to perform the grouping operation
+        try:
+            self.device.coordinator.remove_speaker_from_group(
+                self.group_members[0], self.entity_id
+            )
+        except WamGroupError:
+            raise ServiceValidationError("Error while ungrouping speakers") from None
+        except Exception as exc:
+            LOGGER.error("%s Error while ungrouping speakers", self.device.id)
+            raise HomeAssistantError("Error while ungrouping speakers") from exc
