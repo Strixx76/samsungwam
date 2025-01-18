@@ -14,7 +14,7 @@ from homeassistant.const import (
     CONF_MODEL,
     CONF_PORT,
 )
-from pywam.device import SPEAKER_MODELS
+from pywam.device import SPEAKER_MODELS, get_device_info
 from pywam.speaker import Speaker
 
 from .const import (
@@ -93,7 +93,7 @@ class SamsungWamConfigFlow(ConfigFlow, domain=DOMAIN):
         # Speaker info from pywam
         if ssdp_model is None or ssdp_model not in SPEAKER_MODELS:
             return self.async_abort(reason=ERROR_NOT_SUPPORTED)
-        port = SPEAKER_MODELS[ssdp_model]["port"]
+        port = get_device_info(ssdp_model).port
 
         # Validate speaker
         if result := await self.async_validate_device(host, port):
