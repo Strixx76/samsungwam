@@ -14,7 +14,7 @@ from homeassistant.const import (
     CONF_MODEL,
     CONF_PORT,
 )
-from pywam.lib.const import SPEAKER_MODELS
+from pywam.device import SPEAKER_MODELS
 from pywam.speaker import Speaker
 
 from .const import (
