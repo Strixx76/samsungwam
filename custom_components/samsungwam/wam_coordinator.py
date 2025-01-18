@@ -274,11 +274,6 @@ class SamsungWamCoordinator:
             if not speaker.attribute.is_master:
                 LOGGER.error("%s Speaker is not master", player.device.id)
                 raise WamGroupError()
-            if len(player.group_members) != speaker.attribute.number_of_speakers:
-                LOGGER.error(
-                    "%s Number of group members doesn't match", player.device.id
-                )
-                raise WamGroupError()
 
             for player_slave in player.group_members[1:]:
                 speaker_slave = self.get_media_player(player_slave).speaker

@@ -30,6 +30,14 @@ if TYPE_CHECKING:
 
 
 PING_INTERVAL = 60  # Interval to check speaker connection in minutes
+GROUPING_ATTRIBUTES = {
+    "is_grouped",
+    "is_master",
+    "is_slave",
+    "group_name",
+    "master_ip",
+    "master_mac",
+}
 
 
 class WamEntityCallback(Protocol):
@@ -185,9 +193,14 @@ class SamsungWamDevice:
     def pywam_subscriber(self, attributes: dict[str, Any]) -> None:
         """Receive state changes from pywam."""
 
-        # Update all entities
+        # Update all entities.
         for update_callback in self._update_callbacks:
             update_callback(attributes)
+
+        # If a speakers grouping attribute changes all media players
+        # needs to be updated.
+        if GROUPING_ATTRIBUTES.intersection(attributes.keys()):
+            self.coordinator.update_hass_states()
 
         # If speaker name has change update config entry and device registry.
         if "name" not in attributes:

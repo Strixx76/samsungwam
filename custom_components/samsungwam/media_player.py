@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import datetime as dt
+import functools
 import mimetypes
 from typing import TYPE_CHECKING, Any
 
@@ -60,6 +61,7 @@ SUPPORTED_FEATURES = (
     | MediaPlayerEntityFeature.SELECT_SOUND_MODE
     | MediaPlayerEntityFeature.GROUPING
     | MediaPlayerEntityFeature.PLAY
+    | MediaPlayerEntityFeature.SELECT_SOURCE
 )
 # PLAY is always supported as a workaround for Mini Media Player
 # who calls play_pause when pause is clicked, and not pause.
@@ -72,7 +74,6 @@ FEATURES_MAPPING = {
     Feature.SET_SHUFFLE: MediaPlayerEntityFeature.SHUFFLE_SET,
     Feature.SET_REPEAT: MediaPlayerEntityFeature.REPEAT_SET,
     Feature.PLAY_URL: MediaPlayerEntityFeature.PLAY_MEDIA,
-    Feature.SELECT_SOURCE: MediaPlayerEntityFeature.SELECT_SOURCE,
 }
 # TODO: List all events to listen for
 MONITORED_ATTRIBUTES: set[str] = set()
@@ -88,6 +89,19 @@ async def async_setup_entry(
     media_player = SamsungWamPlayer(device)
 
     async_add_entities([media_player])
+
+
+def master_property(func):
+    """Return masters property if grouped."""
+
+    @functools.wraps(func)
+    def wrapper_master_property(self: SamsungWamPlayer, *args, **kwargs):
+        if self.group_members and self.entity_id != self.group_members[0]:
+            master = self.device.coordinator.get_media_player(self.group_members[0])
+            return getattr(master, func.__name__, None)
+        return func(self, *args, **kwargs)
+
+    return wrapper_master_property
 
 
 class SamsungWamPlayer(WamEntity, MediaPlayerEntity):
@@ -133,6 +147,7 @@ class SamsungWamPlayer(WamEntity, MediaPlayerEntity):
         return self.speaker.attribute.name
 
     @property
+    @master_property
     def state(self):
         """Return the state of the device."""
         if self.speaker.attribute.state == "play":
@@ -173,11 +188,13 @@ class SamsungWamPlayer(WamEntity, MediaPlayerEntity):
         return self.speaker.attribute.muted
 
     @property
+    @master_property
     def media_content_id(self) -> str | None:
         """Content ID of current playing media."""
         return None
 
     @property
+    @master_property
     def media_content_type(self) -> str | None:
         """Content type of current playing media."""
         if self.source != "Wi-Fi":
@@ -193,17 +210,20 @@ class SamsungWamPlayer(WamEntity, MediaPlayerEntity):
         return MediaType.APP
 
     @property
+    @master_property
     def media_duration(self) -> int | None:
         """Duration of current playing media in seconds."""
         return self.speaker.attribute.media_duration
 
     @property
+    @master_property
     def media_position(self) -> int | None:
         """Position of current playing media in seconds."""
         # Not implemented
         return None
 
     @property
+    @master_property
     def media_position_updated_at(self) -> dt.datetime | None:
         """When was the position of the current playing media valid.
 
@@ -213,11 +233,13 @@ class SamsungWamPlayer(WamEntity, MediaPlayerEntity):
         return None
 
     @property
+    @master_property
     def media_image_url(self) -> str | None:
         """Image url of current playing media."""
         return self.speaker.attribute.media_image_url
 
     @property
+    @master_property
     def media_image_remotely_accessible(self) -> bool:
         """If the image url is remotely accessible."""
         if self.app_name != "dlna":
@@ -226,31 +248,37 @@ class SamsungWamPlayer(WamEntity, MediaPlayerEntity):
             return False
 
     @property
+    @master_property
     def media_title(self) -> str | None:
         """Title of current playing media."""
         return self.speaker.attribute.media_title
 
     @property
+    @master_property
     def media_artist(self) -> str | None:
         """Artist of current playing media, music track only."""
         return self.speaker.attribute.media_artist
 
     @property
+    @master_property
     def media_album_name(self) -> str | None:
         """Album name of current playing media, music track only."""
         return self.speaker.attribute.media_album_name
 
     @property
+    @master_property
     def media_album_artist(self) -> str | None:
         """Album artist of current playing media, music track only."""
         return self.speaker.attribute.media_album_artist
 
     @property
+    @master_property
     def media_track(self) -> int | None:
         """Track number of current playing media, music track only."""
         return self.speaker.attribute.media_track
 
     @property
+    @master_property
     def media_channel(self) -> str | None:
         """Channel currently playing."""
         if self.media_content_type == MediaType.CHANNEL:
@@ -258,18 +286,21 @@ class SamsungWamPlayer(WamEntity, MediaPlayerEntity):
         return None
 
     @property
+    @master_property
     def media_playlist(self) -> str | None:
         """Title of Playlist currently playing."""
         # Not implemented
         return None
 
     @property
+    @master_property
     def app_id(self) -> str | None:
         """ID of the current running app."""
         # Not implemented
         return None
 
     @property
+    @master_property
     def app_name(self) -> str | None:
         """Name of the current running app."""
         return self.speaker.attribute.app_name
@@ -277,11 +308,19 @@ class SamsungWamPlayer(WamEntity, MediaPlayerEntity):
     @property
     def source(self) -> str | None:
         """Name of the current input source."""
+        # If speaker is slave we return the master as source
+        if self.group_members and self.entity_id != self.group_members[0]:
+            return self.device.coordinator.get_media_player(self.group_members[0]).name
         return self.speaker.attribute.source
 
     @property
     def source_list(self) -> list[str] | None:
         """List of available input sources."""
+        # If media player is slave return name of master as only source
+        if self.group_members and self.entity_id != self.group_members[0]:
+            return [
+                self.device.coordinator.get_media_player(self.group_members[0]).name
+            ]
         return self.speaker.attribute.source_list
 
     @property
@@ -295,11 +334,13 @@ class SamsungWamPlayer(WamEntity, MediaPlayerEntity):
         return [mode.name for mode in self.speaker.attribute.sound_mode_list]
 
     @property
+    @master_property
     def shuffle(self) -> bool | None:
         """Boolean if shuffle is enabled."""
         return self.speaker.attribute.shuffle_mode
 
     @property
+    @master_property
     def repeat(self) -> str | None:
         """Return current repeat mode."""
         return WAM_TO_REPEAT.get(self.speaker.attribute.repeat_mode)
