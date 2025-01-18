@@ -1,6 +1,11 @@
 ## [unreleased]
 
 
+## [0.1.0rc6] (2025-01-18)
+
+- Even more stability fixes for grouping
+- Ability to select source when speaker is master
+
 ## [0.1.0rc5] (2025-01-15)
 
 - More stable group handling
@@ -41,3 +46,4 @@
 [0.1.0rc3]: https://github.com/Strixx76/samsungwam/tree/v0.1.0rc3
 [0.1.0rc4]: https://github.com/Strixx76/samsungwam/tree/v0.1.0rc4
 [0.1.0rc5]: https://github.com/Strixx76/samsungwam/tree/v0.1.0rc5
+[0.1.0rc6]: https://github.com/Strixx76/samsungwam/tree/v0.1.0rc6
