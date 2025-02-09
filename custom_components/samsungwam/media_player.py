@@ -22,7 +22,7 @@ from homeassistant.components.media_player.const import (
     MediaType,
     RepeatMode,
 )
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.network import is_hass_url
@@ -96,6 +96,20 @@ MONITORED_ATTRIBUTES: set[str] = {
     "sound_mode_list",
     "sound_mode",
 }
+MASTER_ATTRIBUTES: set[str] = {
+    "state",
+    "repeat_mode",
+    "shuffle_mode",
+    "app_name",
+    "media_title",
+    "media_artist",
+    "media_album_name",
+    "media_album_artist",
+    "media_track",
+    "media_image_url",
+    "media_duration",
+    "media_position",
+}
 
 
 async def async_setup_entry(
@@ -154,6 +168,25 @@ class SamsungWamPlayer(WamEntity, MediaPlayerEntity):
         """Run when entity will be removed from hass."""
         self.device.coordinator.delete_media_player(self.entity_id)
         self.device.coordinator.update_hass_states()
+
+    @callback
+    def wam_updates_from_device(
+        self, attributes: dict[str, Any], force_update: bool = False
+    ) -> None:
+        """Receives state changes from SamsungWamDevice."""
+        # Override WamEntity method so that we can write ha state on
+        # slave media players when property should be same as master.
+        if force_update:
+            self.async_write_ha_state()
+            return
+        if self.wam_monitored_attributes.intersection(attributes.keys()):
+            self.async_write_ha_state()
+        if self.group_members and self.entity_id == self.group_members[0]:
+            if MASTER_ATTRIBUTES.intersection(attributes.keys()):
+                # Update state of all slave media players
+                for player_id in self.group_members[1:]:
+                    player = self.device.coordinator.get_media_player(player_id)
+                    player.async_write_ha_state()
 
     @property
     def name(self) -> str | None:
