@@ -1,4 +1,4 @@
-"""Exceptions for the Samsung Wireless Audio media player platform."""
+"""Exceptions for the Samsung Wireless Audio integration."""
 
 
 class WamGroupError(Exception):

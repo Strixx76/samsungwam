@@ -150,6 +150,7 @@ class WamEntity(Entity):
         """Receives state changes from SamsungWamDevice."""
         if force_update:
             self.async_write_ha_state()
+            return
         if self.wam_monitored_attributes is None:
             return
         if not self.wam_monitored_attributes:

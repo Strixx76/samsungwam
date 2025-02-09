@@ -7,7 +7,7 @@ from collections.abc import Iterator
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from homeassistant.core import CALLBACK_TYPE
+from homeassistant.core import CALLBACK_TYPE, HomeAssistant
 from homeassistant.helpers.event import async_call_later
 from pywam.lib.exceptions import PywamError
 
@@ -25,14 +25,16 @@ class SamsungWamCoordinator:
     grouping of speakers.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, hass: HomeAssistant) -> None:
         """Initialize the coordinator."""
+        self.hass = hass
         self._media_players: dict[str, SamsungWamPlayer] = {}
         self._grouping_master: str | None = None
         self._grouping_speakers_to_add: list[str] = []
         self._grouping_speakers_to_remove: list[str] = []
         self._grouping_call_later_cancel: CALLBACK_TYPE | None = None
         self._grouping_in_progress: bool = False
+        self._waiting_to_update_cancel: CALLBACK_TYPE | None = None
 
     def add_media_player(self, entity_id: str, media_player: SamsungWamPlayer) -> None:
         """Add a media player to coordinator."""
@@ -65,8 +67,23 @@ class SamsungWamCoordinator:
         Must be called after all speakers are added to hass to get
         correct grouping information.
         """
-        for _, media_player in self.get_all_available_media_players():
-            media_player.async_write_ha_state()
+        # We wait a bit for more calls since we only need to update all
+        # once but it is called from all devices when receiving grouping
+        # events.
+        if self._waiting_to_update_cancel is not None:
+            LOGGER.debug("(Coordinator) Waiting for more update calls")
+            return
+        self._waiting_to_update_cancel = async_call_later(
+            self.hass, 2, self._async_update_hass_states
+        )
+
+    async def _async_update_hass_states(self, now: datetime) -> None:
+        """Update hass states for all media players that are online."""
+        try:
+            for _, media_player in self.get_all_available_media_players():
+                media_player.async_write_ha_state()
+        finally:
+            self._waiting_to_update_cancel = None
 
     def add_speakers_to_group(self, master_id: str, media_players: list[str]) -> None:
         """Add speakers to a master."""
@@ -90,9 +107,8 @@ class SamsungWamCoordinator:
         # Perform the grouping 1 second from now
         if self._grouping_call_later_cancel is not None:
             return
-        master = self.get_media_player(master_id)
         self._grouping_call_later_cancel = async_call_later(
-            master.hass, 1, self.async_group_media_players
+            self.hass, 1, self.async_group_media_players
         )
 
     def remove_speaker_from_group(self, master_id: str, media_player: str) -> None:
@@ -148,7 +164,8 @@ class SamsungWamCoordinator:
             self._grouping_call_later_cancel = None
             self._grouping_in_progress = False
             # Update all media players
-            self.update_hass_states()
+            # No need to updater here because the device will call it
+            # self.update_hass_states()
 
     async def _group_wam_speakers(self) -> None:
         """Calculate and call pywam grouping."""

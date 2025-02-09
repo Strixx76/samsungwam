@@ -75,8 +75,27 @@ FEATURES_MAPPING = {
     Feature.SET_REPEAT: MediaPlayerEntityFeature.REPEAT_SET,
     Feature.PLAY_URL: MediaPlayerEntityFeature.PLAY_MEDIA,
 }
-# TODO: List all events to listen for
-MONITORED_ATTRIBUTES: set[str] = set()
+MONITORED_ATTRIBUTES: set[str] = {
+    "name",
+    "volume",
+    "muted",
+    "state",
+    "repeat_mode",
+    "shuffle_mode",
+    "source_list",
+    "source",
+    "app_name",
+    "media_title",
+    "media_artist",
+    "media_album_name",
+    "media_album_artist",
+    "media_track",
+    "media_image_url",
+    "media_duration",
+    "media_position",
+    "sound_mode_list",
+    "sound_mode",
+}
 
 
 async def async_setup_entry(

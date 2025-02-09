@@ -35,7 +35,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: WamConfigEntry) -> bool:
     """Set up Samsung Wireless Audio from a config entry."""
     # SamsungWamCoordinator is one per domain and needs to be stored
     # in hass.data.
-    hass.data.setdefault(DOMAIN, SamsungWamCoordinator())
+    hass.data.setdefault(DOMAIN, SamsungWamCoordinator(hass))
     coordinator: SamsungWamCoordinator = hass.data[DOMAIN]
 
     # Setup device and connect to speaker
