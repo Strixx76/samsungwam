@@ -10,7 +10,7 @@
 [![GitHub Sponsors][githubsponsorsbadge]][githubsponsorslink]
 
 Integrate your Samsung Multiroom speakers and soundbars in Home Assistant.
-![Example of supported speakers](https://github.com/Strixx76/samsungwam/tree/master/.github/assets/speakers.png)
+![Example of supported speakers](https://github.com/Strixx76/samsungwam/blob/master/.github/assets/speakers.png)
 ## Features
 
 ### Media player
@@ -81,14 +81,14 @@ If you find this integration useful please consider a small donation to show you
 
 [coffeelink]: https://www.buymeacoffee.com/76strixx
 [coffeebadge]: https://img.shields.io/badge/Buy_Me_A_Coffee-Donate-ffdc02?logo=buymeacoffee&logoColor=white
-[coffeebutton]: https://github.com/Strixx76/samsungwam/tree/master/.github/assets/coffee.png
+[coffeebutton]: https://github.com/Strixx76/samsungwam/blob/master/.github/assets/coffee.png
 [kofilink]: https://ko-fi.com/strixx76
 [kofibadge]: https://img.shields.io/badge/Ko--fi-Donate-ff5a16?logo=kofi&logoColor=white
-[kofibutton]: https://github.com/Strixx76/samsungwam/tree/master/.github/assets/ko-fi.png
+[kofibutton]: https://github.com/Strixx76/samsungwam/blob/master/.github/assets/ko-fi.png
 [paypallink]: https://www.paypal.com/donate/?hosted_button_id=XAWX4FG9FJW6Q
 [paypalbadge]: https://img.shields.io/badge/Paypal-Donate-0070ba?logo=paypal&logoColor=white
-[paypalbutton]: https://github.com/Strixx76/samsungwam/tree/master/.github/assets/paypal.png
+[paypalbutton]: https://github.com/Strixx76/samsungwam/blob/master/.github/assets/paypal.png
 [githubsponsorslink]: https://github.com/sponsors/Strixx76
 [githubsponsorsbadge]: https://img.shields.io/badge/GitHub_Sponsors-Donate-ea4aaa?logo=github&logoColor=white
-[githubsponsorsbutton]: https://github.com/Strixx76/samsungwam/tree/master/.github/assets/github.png
+[githubsponsorsbutton]: https://github.com/Strixx76/samsungwam/blob/master/.github/assets/github.png
 
