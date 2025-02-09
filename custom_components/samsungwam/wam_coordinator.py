@@ -79,6 +79,7 @@ class SamsungWamCoordinator:
 
     async def _async_update_hass_states(self, now: datetime) -> None:
         """Update hass states for all media players that are online."""
+        LOGGER.debug("(Coordinator) Updating all speakers")
         try:
             for _, media_player in self.get_all_available_media_players():
                 media_player.async_write_ha_state()
@@ -150,10 +151,8 @@ class SamsungWamCoordinator:
             await self._group_wam_speakers()
         except WamGroupError as exc:
             LOGGER.error("(Coordinator) %s", exc)
-            raise
         except PywamError as exc:
             LOGGER.error("(pywam) %s", exc)
-            raise WamGroupError() from None
         finally:
             # Wait until all speakers have reported new states
             await asyncio.sleep(2)
@@ -163,9 +162,6 @@ class SamsungWamCoordinator:
             self._grouping_speakers_to_remove = []
             self._grouping_call_later_cancel = None
             self._grouping_in_progress = False
-            # Update all media players
-            # No need to updater here because the device will call it
-            # self.update_hass_states()
 
     async def _group_wam_speakers(self) -> None:
         """Calculate and call pywam grouping."""
