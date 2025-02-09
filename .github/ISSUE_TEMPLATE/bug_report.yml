@@ -1,0 +1,54 @@
+name: Bug report
+description: Report an bug/issue with the pywam package.
+body:
+  - type: markdown
+    attributes:
+      value: |
+        # Bug report
+        **This issue form is for reporting bugs only**
+        If you have a feature or enhancement request, please use the feature request form.
+  - type: textarea
+    validations:
+      required: true
+    attributes:
+      label: Problem
+      description:  >-
+        Describe the issue you are experiencing.
+  - type: markdown
+    attributes:
+      value: |
+        # Details
+  - type: input
+    validations:
+      required: true
+    attributes:
+      label: Home Assistant version
+      description:  >-
+        Version number of Home Assistant
+  - type: input
+    validations:
+      required: true
+    attributes:
+      label: Integration version
+      description:  >-
+        Version number of the Samsung Wireless Audio Integration
+  - type: textarea
+    attributes:
+      label: Diagnostics information
+      placeholder: "drag-and-drop the diagnostics data file here (do not copy-and-paste the content)"
+      description: >-
+        Please [download diagnostic data](https://www.home-assistant.io/docs/configuration/troubleshooting/#download-diagnostics).
+        and drag-and-drop that file into the textbox below.
+      render: text
+- type: textarea
+    attributes:
+      label: Anything in the logs that might be helpful?
+      description: >-
+        Please [activate debug logging](https://www.home-assistant.io/docs/configuration/troubleshooting/#enabling-debug-logging)
+        and copy and paste every line you think can be helpful in solving the issue.
+      render: text
+  - type: textarea
+    attributes:
+      label: Additional information
+      description: >
+        If you have any additional information, use the field below.
