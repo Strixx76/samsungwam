@@ -40,7 +40,7 @@ body:
         Please [download diagnostic data](https://www.home-assistant.io/docs/configuration/troubleshooting/#download-diagnostics).
         and drag-and-drop that file into the textbox below.
       render: text
-- type: textarea
+  - type: textarea
     attributes:
       label: Anything in the logs that might be helpful?
       description: >-
