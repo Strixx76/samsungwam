@@ -206,6 +206,8 @@ class SamsungWamPlayer(WamEntity, MediaPlayerEntity):
             return MediaPlayerState.PLAYING
         if self.speaker.attribute.state == "pause":
             return MediaPlayerState.PAUSED
+        if self.speaker.attribute.state == "resume":
+            return MediaPlayerState.PLAYING
 
         return MediaPlayerState.IDLE  # "stop" is IDLE
 
