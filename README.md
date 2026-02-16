@@ -2,7 +2,7 @@
 
 [![HACS][hacsbadge]][hacslink]
 [![License][licensebadge]][licenselink]
-![downloadsbadge]
+![installationsbadge]
 
 [![Buy Me A Coffee][coffeebadge]][coffeelink]
 [![Ko-fi][kofibadge]][kofilink]
@@ -11,6 +11,11 @@
 
 Integrate your Samsung Multiroom speakers and soundbars in Home Assistant.
 ![Example of supported speakers](https://github.com/Strixx76/samsungwam/blob/master/.github/assets/speakers.png)
+
+[!IMPORTANT]
+> This integration only supports speakers that can be controlled by the [Wireless Audio-Multiroom (Android)](https://play.google.com/store/apps/details?id=com.samsung.roomspeaker3&pcampaignid=web_share) or [Wireless Audio : Multiroom (iOS)](https://apps.apple.com/se/app/wireless-audio-multiroom/id1081757852).
+> This library will never support speakers not supported by the native Multiroom App.
+
 ## Features
 
 ### Media player
@@ -41,8 +46,7 @@ If, for some reason they are not discovered, you can also manually add them:
 1. In the Home Assistant UI go to "Configuration" -> "Integrations" and click "+" and search for "Samsung Wireless Audio", or click the badge if you have My Home Assistant activated:
 
    [![Open your Home Assistant instance and start setting up a new integration.][mybadge]][mylink]
-1. Enter speakers IP address.
-1. Optionally you can change the port for API calls to the speaker. _The default port is 55001, but there is information on the net that some speakers is listening on port 56001._
+   Enter speakers IP address.
 
 If you have a speaker not known to pywam that works with this integration please [let me know](https://github.com/Strixx76/pywam/issues) so that we can add it and help others.
 
@@ -72,10 +76,10 @@ If you find this integration useful please consider a small donation to show you
 
 
 [hacslink]: https://hacs.xyz
-[hacsbadge]: https://img.shields.io/badge/HACS-Custom-41BDF5.svg
+[hacsbadge]: https://img.shields.io/badge/HACS-Default-41BDF5.svg
 [licensebadge]: https://img.shields.io/badge/licens-MIT-41BDF5.svg
 [licenselink]: LICENSE.txt
-[downloadsbadge]: https://img.shields.io/github/downloads/Strixx76/samsungwam/latest/total?label=downloads&color=41BDF5
+[installationsbadge]: https://img.shields.io/badge/dynamic/json?color=41BDF5&logoColor=FFFFFF&logo=home-assistant&label=Installations&cacheSeconds=15600&url=https://analytics.home-assistant.io/custom_integrations.json&query=$.samsungwam.total
 [mylink]: https://my.home-assistant.io/redirect/config_flow_start/?domain=samsungwam
 [mybadge]: https://my.home-assistant.io/badges/config_flow_start.svg
 
