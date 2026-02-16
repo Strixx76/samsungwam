@@ -7,13 +7,13 @@ from urllib.parse import urlparse
 
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
-from homeassistant.components import ssdp
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 from homeassistant.const import (
     CONF_HOST,
     CONF_MODEL,
     CONF_PORT,
 )
+from homeassistant.helpers.service_info import ssdp
 from pywam.device import SPEAKER_MODELS, get_device_info
 from pywam.speaker import Speaker
 
