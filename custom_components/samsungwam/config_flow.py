@@ -55,6 +55,8 @@ class SamsungWamConfigFlow(ConfigFlow, domain=DOMAIN):
                 name = await speaker.get_name()
                 model = await speaker.get_model()
                 speaker_id = await speaker.get_speaker_id()
+                # Test that the speaker supports all API used by pywam.
+                _ = await speaker.update()
 
             self.config_data = {
                 CONF_HOST: host,
