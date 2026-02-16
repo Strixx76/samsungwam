@@ -25,7 +25,6 @@ from .const import (
 DATA_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_HOST): str,
-        vol.Optional(CONF_PORT, default=55001): cv.port,  # type: ignore
     }
 )
 
@@ -107,7 +106,7 @@ class SamsungWamConfigFlow(ConfigFlow, domain=DOMAIN):
 
         if user_input is not None:
             host = user_input[CONF_HOST]
-            port = user_input[CONF_PORT]
+            port = 55001
 
             # Validate speaker
             if result := await self.async_validate_device(host, port):
