@@ -12,9 +12,9 @@
 Integrate your Samsung Multiroom speakers and soundbars in Home Assistant.
 ![Example of supported speakers](https://github.com/Strixx76/samsungwam/blob/master/.github/assets/speakers.png)
 
-[!IMPORTANT]
+> [!IMPORTANT]
 > This integration only supports speakers that can be controlled by the [Wireless Audio-Multiroom (Android)](https://play.google.com/store/apps/details?id=com.samsung.roomspeaker3&pcampaignid=web_share) or [Wireless Audio : Multiroom (iOS)](https://apps.apple.com/se/app/wireless-audio-multiroom/id1081757852).
-> This library will never support speakers not supported by the native Multiroom App.
+> This integration will never support speakers not supported by the native Multiroom App.
 
 ## Features
 
@@ -95,4 +95,5 @@ If you find this integration useful please consider a small donation to show you
 [githubsponsorslink]: https://github.com/sponsors/Strixx76
 [githubsponsorsbadge]: https://img.shields.io/badge/GitHub_Sponsors-Donate-ea4aaa?logo=github&logoColor=white
 [githubsponsorsbutton]: https://github.com/Strixx76/samsungwam/blob/master/.github/assets/github.png
+
 
