@@ -1,6 +1,6 @@
 # The contents of this file is based on https://github.com/home-assistant/core/blob/dev/Dockerfile.dev
 
-FROM mcr.microsoft.com/devcontainers/python:1-3.12
+FROM mcr.microsoft.com/devcontainers/python:3.13
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
@@ -14,8 +14,7 @@ RUN \
     && pipx uninstall pytest
 
 RUN \
-    curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - \
-    && apt-get update \
+    apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     # Additional library needed by some tests and accordingly by VScode Tests Discovery
     bluez \
@@ -34,8 +33,12 @@ RUN \
     libxml2 \
     git \
     cmake \
+    autoconf \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
+# Add go2rtc binary
+COPY --from=ghcr.io/alexxit/go2rtc:latest /usr/local/bin/go2rtc /bin/go2rtc
+
 # Set the default shell to bash instead of sh
-ENV SHELL /bin/bash
+ENV SHELL=/bin/bash

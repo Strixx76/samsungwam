@@ -1,15 +1,15 @@
 -r requirements.txt
 # Versions match Home Assistant versions
-# https://github.com/home-assistant/core/blob/2024.6.1/requirements_test.txt
+# https://github.com/home-assistant/core/blob/2026.2.0/requirements_test.txt
 #mypy==1.10.0
-mypy-dev==1.11.0a3
-pytest==8.2.0
-pytest-cov==5.0.0
+mypy-dev==1.19.0a4
+pytest==9.0.0
+pytest-cov==7.0.0
 # Versions match Home Assistant versions
-# https://github.com/home-assistant/core/blob/2024.6.1/requirements_test_pre_commit.txt
-ruff==0.4.6
+# https://github.com/home-assistant/core/blob/2026.2.0/requirements_test_pre_commit.txt
+ruff==0.14.13
 # https://github.com/KapJI/homeassistant-stubs
-homeassistant-stubs==2024.6.1
+homeassistant-stubs==2026.2.0
 # Needed for helper scripts
 versions
 aiohttp

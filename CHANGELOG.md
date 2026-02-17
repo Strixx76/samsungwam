@@ -1,5 +1,12 @@
 ## [unreleased]
 
+## [0.2.0] (2026-02-18)
+
+- Relocate ssdp (Fixes [#8](https://github.com/Strixx76/samsungwam/issues/8))
+- Changes to clarify which speakers that are supported
+- Improved discovery handling
+- Fixes for DLNA and grouping
+
 
 ## [0.1.0] (2025-02-09)
 
@@ -19,3 +26,4 @@
 [0.0.1]: https://github.com/Strixx76/samsungwam/tree/v0.0.1
 [0.0.2]: https://github.com/Strixx76/samsungwam/tree/v0.0.2
 [0.1.0]: https://github.com/Strixx76/samsungwam/tree/v0.1.0
+[0.2.0]: https://github.com/Strixx76/samsungwam/tree/v0.2.0
