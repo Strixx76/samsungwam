@@ -38,6 +38,7 @@ from .const import LOGGER
 from .exceptions import WamGroupError
 from .wam_entity import WamEntity, async_check_connection
 from .wam_url import (
+    async_check_redirect,
     async_get_http_headers,
     async_get_playlist_item,
 )
@@ -548,6 +549,8 @@ class SamsungWamPlayer(WamEntity, MediaPlayerEntity):
                     "%s media_id is not a local url - we need to check mime type",
                     self.device.id,
                 )
+                # Speaker can't handle redirects.
+                play_item.url = await async_check_redirect(self, play_item.url)
                 header = await async_get_http_headers(self, play_item.url)
                 mime = mimetypes.guess_type(play_item.url)[0]
                 if not mime:
@@ -576,6 +579,8 @@ class SamsungWamPlayer(WamEntity, MediaPlayerEntity):
         # URL (Music)
         if media_type == "music":
             LOGGER.debug("%s Will se if we can play: %s", self.device.id, media_id)
+            # Speaker can't handle redirects.
+            media_id = await async_check_redirect(self, media_id)
             header = await async_get_http_headers(self, media_id)
             mime = mimetypes.guess_type(media_id)[0]
             if not mime:

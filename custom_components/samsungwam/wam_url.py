@@ -25,6 +25,29 @@ class HttpHeaderInfo:
     description: str
 
 
+async def async_check_redirect(player: SamsungWamPlayer, url: str) -> str:
+    """Check if url is being redirected and return new url if needed."""
+
+    LOGGER.debug("%s Checking for redirects: %s", player.device.id, url)
+
+    try:
+        client = get_async_client(player.hass)
+        response = await client.head(url, follow_redirects=False)
+    except Exception as exc:
+        raise ConnectionError("Could not connect to server") from exc
+
+    LOGGER.debug("%s Response code: %s", player.device.id, response.status_code)
+
+    if response.status_code in (301, 302, 307, 308):
+        new_url = response.headers.get("location", None)
+        LOGGER.debug(
+            "%s is being redirected to: %s", player.device.id, new_url
+        )
+        return new_url
+
+    return url
+
+
 async def async_get_http_headers(player: SamsungWamPlayer, url: str) -> HttpHeaderInfo:
     """Get information from http headers."""
 
@@ -32,19 +55,17 @@ async def async_get_http_headers(player: SamsungWamPlayer, url: str) -> HttpHead
 
     try:
         client = get_async_client(player.hass)
-        response = await client.head(url)
+        response = await client.head(url, follow_redirects=False)
     except Exception as exc:
         raise ConnectionError("Could not connect to server") from exc
 
     LOGGER.debug("%s Response code: %s", player.device.id, response.status_code)
 
-    if response.status_code not in (200, 301, 307, 308):
+    if response.status_code in (301, 302, 307, 308):
+        raise ConnectionError("To many redirects.")
+
+    if response.status_code != 200:
         raise ConnectionError(f"HTTP error: {response.status_code}")
-    if response.status_code in (301, 307, 308):
-        new_url = response.headers.get("location", "?")
-        LOGGER.warning(
-            "%s %s is being redirected to: %s", player.device.id, url, new_url
-        )
 
     content_type = response.headers.get("content-type", "").split(";")[0]
     content_length = int(response.headers.get("content-length", 0))
