@@ -5,7 +5,6 @@ from __future__ import annotations
 from typing import Final
 from urllib.parse import urlparse
 
-import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 from homeassistant.const import (
@@ -65,6 +64,9 @@ class SamsungWamConfigFlow(ConfigFlow, domain=DOMAIN):
             }
             self.config_title = name
             self.config_id = speaker_id
+
+            self.async_update_title_placeholders({"name": name, "model": model})
+
         except Exception:  # pylint: disable=broad-except
             LOGGER.exception("Error while getting speaker data")
             # TODO: Better error handling

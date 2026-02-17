@@ -1,6 +1,6 @@
 {
 	"config": {
-		"flow_title": "Samsung Wireless Audio",
+		"flow_title": "{name} ({model})",
 		"step": {
 			"user": {
 				"title": "Add Speaker",
