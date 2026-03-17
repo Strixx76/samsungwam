@@ -21,8 +21,8 @@ homeassistant:
 # debugpy:
 
 logger:
-  default: error
-  # logs:
-  # homeassistant.components.debugpy: warning
-  # custom_components.samsungwam: debug
-  # pywam: error
+  default: info
+  logs:
+    homeassistant.components.debugpy: warning
+    custom_components.samsungwam: debug
+    pywam: info
