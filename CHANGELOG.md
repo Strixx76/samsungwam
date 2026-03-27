@@ -1,7 +1,7 @@
 ## [unreleased]
 
 
-## [0.2.1b1] - 2026-03-16
+## [0.2.1b2] - 2026-03-25
 - Implementing GetGeature API call to support different max volumes.
 
 
@@ -32,4 +32,4 @@
 [0.0.2]: https://github.com/Strixx76/samsungwam/tree/v0.0.2
 [0.1.0]: https://github.com/Strixx76/samsungwam/tree/v0.1.0
 [0.2.0]: https://github.com/Strixx76/samsungwam/tree/v0.2.0
-[0.2.1b1]: https://github.com/Strixx76/samsungwam/tree/v0.2.1b1
+[0.2.1b2]: https://github.com/Strixx76/samsungwam/tree/v0.2.1b2
