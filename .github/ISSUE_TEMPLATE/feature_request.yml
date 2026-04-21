@@ -1,0 +1,46 @@
+name: Feature request
+description: Suggest a new feature.
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        # Feature request
+        **This issue form is for requesting new features or enhancements**
+        If you have found a bug, please use the bug report form.
+  - type: textarea
+    validations:
+      required: true
+    attributes:
+      label: Description
+      description: >-
+        Describe the feature your missing or enhancement you would like to see.
+  - type: markdown
+    attributes:
+      value: |
+        # Details
+  - type: textarea
+    validations:
+      required: true
+    attributes:
+      label: Reason
+      description: >-
+        What is the reason for suggesting this?
+      render: txt
+  - type: textarea
+    attributes:
+      label: Additional information
+      description: >-
+        If you have any additional information, use the field below.
+  - type: checkboxes
+    attributes:
+      label: Reverse engineering
+      description: >-
+        There is no official documentation of the API used to control the speakers.
+        So to be able to implement new features we need to investigate the API, and do a lot of testing.
+        I have developed a GUI tool to make this a bit more easy:
+        [pywam API explorer GUI tool](https://github.com/Strixx76/pywam_gui_tool)
+        Please take a look at it and think about if you are able to help investigating the API.
+      options:
+        - label: >-
+            I am willing to help investigate the API if needed to implement the suggested feature.

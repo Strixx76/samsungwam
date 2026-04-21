@@ -1,0 +1,22 @@
+name: Release
+on:
+  release:
+    types: [created]
+
+jobs:
+  add_zip_file:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: 📥 Checkout the repository
+        uses: actions/checkout@v4
+        
+      - name: '📦 Add zip file'
+        run: |
+          cd ${{github.workspace}}/custom_components/
+          zip ${{github.event.repository.name}}.zip -r ./
+          gh release upload ${{github.event.release.tag_name}} ${{github.event.repository.name}}.zip
+        env:
+          GITHUB_TOKEN: ${{github.TOKEN}}
+        shell: bash

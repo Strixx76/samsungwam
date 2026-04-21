@@ -1,0 +1,33 @@
+## [unreleased]
+
+## [0.2.1b3] - 2026-04-21
+
+- Implementing GetGeature API call to support different max volumes.
+
+## [0.2.0] (2026-02-18)
+
+- Relocate ssdp (Fixes [#8](https://github.com/Strixx76/samsungwam/issues/8))
+- Changes to clarify which speakers that are supported
+- Improved discovery handling
+- Fixes for DLNA and grouping
+
+## [0.1.0] (2025-02-09)
+
+- Continuously checking the connection and at need reestablish it
+- Added grouping feature
+- Added play media service
+
+## [0.0.2] (2023-03-09)
+
+- Change to async_forward_entry_setups for compatibility with Home Assistant version > 2023.3
+
+## [0.0.1] (2023-03-07)
+
+- Initial release
+
+[unreleased]: https://github.com/Strixx76/samsungwam
+[0.0.1]: https://github.com/Strixx76/samsungwam/tree/v0.0.1
+[0.0.2]: https://github.com/Strixx76/samsungwam/tree/v0.0.2
+[0.1.0]: https://github.com/Strixx76/samsungwam/tree/v0.1.0
+[0.2.0]: https://github.com/Strixx76/samsungwam/tree/v0.2.0
+[0.2.1b3]: https://github.com/Strixx76/samsungwam/tree/v0.2.1b3

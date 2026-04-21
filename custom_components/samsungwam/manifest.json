@@ -1,0 +1,28 @@
+{
+  "domain": "samsungwam",
+  "name": "Samsung Wireless Audio",
+  "codeowners": [
+    "@strixx76"
+  ],
+  "config_flow": true,
+  "dependencies": [],
+  "documentation": "https://github.com/strixx76/samsungwam",
+  "integration_type": "device",
+  "iot_class": "local_push",
+  "issue_tracker": "https://github.com/Strixx76/samsungwam/issues",
+  "requirements": [
+    "pywam==0.2.1b3"
+  ],
+  "ssdp": [
+    {
+      "st": "urn:samsung.com:service:MultiScreenService:1"
+    },
+    {
+      "friendlyName": "Samsung Wireless Audio"
+    },
+    {
+      "st": "urn:schemas-upnp-org:device:MediaRenderer:1"
+    }
+  ],
+  "version": "0.2.1b3"
+}
