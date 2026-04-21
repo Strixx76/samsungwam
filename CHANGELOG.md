@@ -1,9 +1,8 @@
 ## [unreleased]
 
+## [0.2.1b3] - 2026-04-21
 
-## [0.2.1b2] - 2026-03-25
 - Implementing GetGeature API call to support different max volumes.
-
 
 ## [0.2.0] (2026-02-18)
 
@@ -11,7 +10,6 @@
 - Changes to clarify which speakers that are supported
 - Improved discovery handling
 - Fixes for DLNA and grouping
-
 
 ## [0.1.0] (2025-02-09)
 
@@ -32,4 +30,4 @@
 [0.0.2]: https://github.com/Strixx76/samsungwam/tree/v0.0.2
 [0.1.0]: https://github.com/Strixx76/samsungwam/tree/v0.1.0
 [0.2.0]: https://github.com/Strixx76/samsungwam/tree/v0.2.0
-[0.2.1b2]: https://github.com/Strixx76/samsungwam/tree/v0.2.1b2
+[0.2.1b3]: https://github.com/Strixx76/samsungwam/tree/v0.2.1b3
