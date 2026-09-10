@@ -114,7 +114,7 @@ class WamEntity(Entity):
         Example use: disconnect from the server or unsubscribe from
         updates.
         """
-        super().async_will_remove_from_hass()
+        await super().async_will_remove_from_hass()
         self.device.remove_update_callback(self.wam_updates_from_device)
         await self.wam_async_will_remove_from_hass_extra()
 
