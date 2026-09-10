@@ -1,8 +1,10 @@
 ## [unreleased]
 
-## [0.2.1b3] - 2026-04-21
+## [0.2.2] - 2026-09-10
 
-- Implementing GetGeature API call to support different max volumes.
+- Possibility to change API port of speaker when adding a new speaker.
+- Fix volume level 0
+- Implementing GetFeature API call to support different max volumes.
 
 ## [0.2.0] (2026-02-18)
 
@@ -30,4 +32,4 @@
 [0.0.2]: https://github.com/Strixx76/samsungwam/tree/v0.0.2
 [0.1.0]: https://github.com/Strixx76/samsungwam/tree/v0.1.0
 [0.2.0]: https://github.com/Strixx76/samsungwam/tree/v0.2.0
-[0.2.1b3]: https://github.com/Strixx76/samsungwam/tree/v0.2.1b3
+[0.2.2]: https://github.com/Strixx76/samsungwam/tree/v0.2.2

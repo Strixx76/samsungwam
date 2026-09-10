@@ -9,7 +9,7 @@
     // and mount it in this container to be able to do local pip installs.
     // Only change path to source!!!
     "mounts": [
-        "source=C:/Users/strix/OneDrive/Programmering/github/pywam,target=/home/vscode/package,type=bind,consistency=ro"
+        "source=C:/dev/pywam,target=/home/vscode/package,type=bind,consistency=ro"
     ],
     "build": {
         "dockerfile": "Dockerfile",
