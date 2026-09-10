@@ -13,6 +13,7 @@ from homeassistant.const import (
     CONF_PORT,
 )
 from homeassistant.helpers.service_info import ssdp
+import homeassistant.helpers.config_validation as cv
 from pywam.device import SPEAKER_MODELS, get_device_info
 from pywam.speaker import Speaker
 
@@ -23,7 +24,8 @@ from .const import (
 
 DATA_SCHEMA = vol.Schema(
     {
-        vol.Required(CONF_HOST): str,
+        vol.Required(CONF_HOST): cv.string,
+        vol.Optional(CONF_PORT, default=55001): cv.port,
     }
 )
 
@@ -110,7 +112,7 @@ class SamsungWamConfigFlow(ConfigFlow, domain=DOMAIN):
 
         if user_input is not None:
             host = user_input[CONF_HOST]
-            port = 55001
+            port = user_input[CONF_PORT]
 
             # Validate speaker
             if result := await self.async_validate_device(host, port):
