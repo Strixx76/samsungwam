@@ -10,9 +10,9 @@ jobs:
       contents: write
     steps:
       - name: 📥 Checkout the repository
-        uses: actions/checkout@v4
-        
-      - name: '📦 Add zip file'
+        uses: actions/checkout@v6
+
+      - name: "📦 Add zip file"
         run: |
           cd ${{github.workspace}}/custom_components/
           zip ${{github.event.repository.name}}.zip -r ./
