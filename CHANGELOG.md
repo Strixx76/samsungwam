@@ -1,5 +1,9 @@
 ## [unreleased]
 
+## [0.2.3] - 2026-10-11
+
+- Bump pywam to 0.2.3 to support more speakers.
+
 ## [0.2.2] - 2026-09-10
 
 - Possibility to change API port of speaker when adding a new speaker.
@@ -33,3 +37,4 @@
 [0.1.0]: https://github.com/Strixx76/samsungwam/tree/v0.1.0
 [0.2.0]: https://github.com/Strixx76/samsungwam/tree/v0.2.0
 [0.2.2]: https://github.com/Strixx76/samsungwam/tree/v0.2.2
+[0.2.3]: https://github.com/Strixx76/samsungwam/tree/v0.2.3
